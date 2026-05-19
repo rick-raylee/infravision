@@ -1,12 +1,220 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
-            <h1><i class="fa-solid fa-laptop me-2 text-primary"></i> Computadores & Notebooks Ativos</h1>
+            <h1><i class="fa-solid fa-laptop me-2 text-primary"></i> Computadores &amp; Notebooks Ativos</h1>
             <div class="badge bg-primary p-2"><i class="fa-solid fa-desktop me-1"></i> Inventário Automático</div>
         </div>
         <p class="text-secondary">Lista de estações de trabalho monitoradas ativas, fichas técnicas detalhadas e controle de periféricos.</p>
     </div>
 </div>
+
+<style>
+/* ============================================================
+   COMPUTER CARDS — FICHA TÉCNICA REDESIGN
+   ============================================================ */
+.computer-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+    overflow: hidden;
+}
+.computer-card:hover {
+    box-shadow: 0 8px 40px rgba(0,120,255,0.12);
+    border-color: rgba(0,120,255,0.25);
+    transform: translateY(-2px);
+}
+
+/* ---- Header ---- */
+.computer-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.2rem 1.2rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.computer-card__hostname {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #f0f4ff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+.computer-card__ip {
+    font-size: 0.75rem;
+    color: #60a5fa;
+    font-family: monospace;
+    margin-top: 2px;
+}
+
+/* ---- Ficha Técnica ---- */
+.ficha-section {
+    padding: 1rem 1.2rem;
+}
+.ficha-section__title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #60a5fa;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ficha-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.ficha-row:last-child { border-bottom: none; }
+.ficha-row__icon {
+    color: rgba(255,255,255,0.3);
+    font-size: 0.8rem;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+.ficha-row__label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.45);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 105px;
+    line-height: 1.4;
+}
+.ficha-row__value {
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    word-break: break-word;
+    line-height: 1.4;
+}
+.ficha-row__value code {
+    font-size: 0.78rem;
+    color: #fbbf24;
+    background: rgba(251,191,36,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* ---- CPU / RAM badges ---- */
+.usage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.07);
+    color: #cbd5e1;
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-right: 4px;
+    margin-top: 2px;
+}
+.usage-badge--cpu { border-color: rgba(99,102,241,0.4); color: #a5b4fc; background: rgba(99,102,241,0.1); }
+.usage-badge--ram { border-color: rgba(16,185,129,0.4); color: #6ee7b7; background: rgba(16,185,129,0.1); }
+
+/* ---- Periféricos ---- */
+.perifericos-section {
+    padding: 0.85rem 1.2rem 1.1rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.1);
+}
+.perifericos-section__title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fbbf24;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.periferico-block {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 0.7rem 0.85rem;
+    height: 100%;
+}
+.periferico-block__label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.periferico-block__status {
+    margin-bottom: 8px;
+}
+.badge-trocado {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(16,185,129,0.15);
+    color: #34d399;
+    border: 1px solid rgba(16,185,129,0.3);
+}
+.badge-nao-reg {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.07);
+}
+.periferico-form {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-top: 4px;
+}
+.periferico-form input[type="date"] {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.72rem;
+    padding: 4px 7px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0;
+    border-radius: 7px;
+    outline: none;
+}
+.periferico-form input[type="date"]:focus {
+    border-color: rgba(251,191,36,0.5);
+    background: rgba(251,191,36,0.05);
+}
+.btn-periferico {
+    flex-shrink: 0;
+    background: rgba(251,191,36,0.15);
+    border: 1px solid rgba(251,191,36,0.3);
+    color: #fbbf24;
+    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+.btn-periferico:hover {
+    background: rgba(251,191,36,0.3);
+    color: #fff;
+}
+</style>
 
 <div class="row g-4">
     <?php if (empty($computadores)): ?>
@@ -14,120 +222,163 @@
             <div class="noc-card p-5 text-center text-secondary">
                 <i class="fa-solid fa-network-wired fa-3x mb-3 text-muted"></i>
                 <h4>Nenhum Computador Ativo</h4>
-                <p class="mb-0">Execute o agente PowerShell em computadores ou notebooks para registrá-los e ver a ficha técnica em tempo real.</p>
+                <p class="mb-0">Execute o agente em computadores ou notebooks para registrá-los e ver a ficha técnica em tempo real.</p>
             </div>
         </div>
     <?php else: ?>
-        <?php foreach ($computadores as $c): 
+        <?php foreach ($computadores as $c):
             $cpu = $c['cpu'] !== null ? round($c['cpu']) : 0;
             $ram = $c['ram'] !== null ? round($c['ram']) : 0;
+            $statusClass = $c['status'] === 'online' ? 'bg-success' : ($c['status'] === 'alerta' ? 'bg-warning' : 'bg-danger');
         ?>
-            <div class="col-12 col-lg-6">
-                <div class="noc-card p-4 h-100 d-flex flex-column justify-content-between">
-                    <div>
-                        <!-- Header -->
-                        <div class="d-flex justify-content-between align-items-start border-bottom border-secondary border-opacity-10 pb-3 mb-3">
-                            <div>
-                                <h4 class="mb-0 text-light"><i class="fa-solid fa-laptop me-2 text-primary"></i><?= htmlspecialchars($c['nome']) ?></h4>
-                                <span class="badge border border-info text-info small mt-1"><code class="text-info"><?= htmlspecialchars($c['ip']) ?></code></span>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge <?= $c['status'] === 'online' ? 'bg-success' : 'bg-danger' ?> px-3 py-2 rounded-pill">
-                                    <?= strtoupper($c['status']) ?>
+            <div class="col-12 col-xl-6">
+                <div class="computer-card h-100 d-flex flex-column">
+
+                    <!-- ======= HEADER ======= -->
+                    <div class="computer-card__header">
+                        <div style="min-width:0;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="fa-solid fa-laptop text-primary" style="font-size:1rem;"></i>
+                                <span class="computer-card__hostname" title="<?= htmlspecialchars($c['nome']) ?>">
+                                    <?= htmlspecialchars($c['nome']) ?>
                                 </span>
-                                <div class="text-secondary small mt-1">Check: <?= $c['ultimo_check'] ? date('H:i:s d/m', strtotime($c['ultimo_check'])) : 'Nunca' ?></div>
+                            </div>
+                            <div class="computer-card__ip">
+                                <i class="fa-solid fa-network-wired me-1" style="font-size:0.65rem;"></i>
+                                <?= htmlspecialchars($c['ip']) ?>
                             </div>
                         </div>
-
-                        <!-- Ficha Técnica -->
-                        <div class="mb-4">
-                            <h6 class="text-primary text-uppercase mb-3 small fw-bold tracking-wider"><i class="fa-solid fa-circle-info me-1"></i> Ficha Técnica</h6>
-                            <table class="table table-sm table-borderless text-light mb-0" style="font-size: 0.9rem;">
-                                <tbody>
-                                    <tr>
-                                        <td class="text-secondary ps-0" style="width: 140px;"><i class="fa-solid fa-user me-2"></i>Usuário Logado:</td>
-                                        <td><strong><?= htmlspecialchars($c['usuario_logado'] ?? 'Desconhecido') ?></strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-secondary ps-0"><i class="fa-solid fa-window-restore me-2"></i>Sistema:</td>
-                                        <td><?= htmlspecialchars($c['sistema_operacional'] ?? 'Desconhecido') ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-secondary ps-0"><i class="fa-solid fa-microchip me-2"></i>Processador:</td>
-                                        <td><?= htmlspecialchars($c['processador'] ?? 'Desconhecido') ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-secondary ps-0"><i class="fa-solid fa-industry me-2"></i>Fabricante / Mod:</td>
-                                        <td><?= htmlspecialchars($c['fabricante'] ?? '') ?> - <?= htmlspecialchars($c['modelo'] ?? '') ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-secondary ps-0"><i class="fa-solid fa-barcode me-2"></i>Nº de Série:</td>
-                                        <td><code class="text-warning"><?= htmlspecialchars($c['numero_serie'] ?? 'Desconhecido') ?></code></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-secondary ps-0"><i class="fa-solid fa-gauge-high me-2"></i>Uso Recente:</td>
-                                        <td>
-                                            <span class="badge bg-secondary me-1">CPU: <?= $cpu ?>%</span>
-                                            <span class="badge bg-secondary">RAM: <?= $ram ?>%</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="text-end flex-shrink-0 ms-2">
+                            <span class="badge <?= $statusClass ?> px-3 py-1 rounded-pill" style="font-size:0.7rem;">
+                                <?= strtoupper($c['status']) ?>
+                            </span>
+                            <div class="text-secondary mt-1" style="font-size:0.68rem;">
+                                <i class="fa-solid fa-clock me-1"></i>
+                                <?= $c['ultimo_check'] ? date('H:i d/m', strtotime($c['ultimo_check'])) : 'Nunca' ?>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Controle Manual de Periféricos (Mouse e Teclado) -->
-                    <div class="border-top border-secondary border-opacity-10 pt-3 mt-auto">
-                        <h6 class="text-warning text-uppercase mb-3 small fw-bold tracking-wider"><i class="fa-solid fa-keyboard me-1"></i> Controle de Periféricos (Troca)</h6>
-                        
-                        <div class="row g-3">
-                            <!-- Troca de Mouse -->
+                    <!-- ======= FICHA TÉCNICA ======= -->
+                    <div class="ficha-section flex-grow-1">
+                        <div class="ficha-section__title">
+                            <i class="fa-solid fa-circle-info"></i> Ficha Técnica
+                        </div>
+
+                        <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-solid fa-user"></i></div>
+                            <div class="ficha-row__label">Usuário Logado</div>
+                            <div class="ficha-row__value">
+                                <strong><?= htmlspecialchars($c['usuario_logado'] ?? 'Desconhecido') ?></strong>
+                            </div>
+                        </div>
+
+                        <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-brands fa-windows"></i></div>
+                            <div class="ficha-row__label">Sistema</div>
+                            <div class="ficha-row__value"><?= htmlspecialchars($c['sistema_operacional'] ?? 'Desconhecido') ?></div>
+                        </div>
+
+                        <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-solid fa-microchip"></i></div>
+                            <div class="ficha-row__label">Processador</div>
+                            <div class="ficha-row__value"><?= htmlspecialchars($c['processador'] ?? 'Desconhecido') ?></div>
+                        </div>
+
+                        <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-solid fa-building"></i></div>
+                            <div class="ficha-row__label">Fabricante / Modelo</div>
+                            <div class="ficha-row__value">
+                                <?= htmlspecialchars(trim(($c['fabricante'] ?? '') . ' — ' . ($c['modelo'] ?? ''), ' —') ?: 'Desconhecido') ?>
+                            </div>
+                        </div>
+
+                        <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-solid fa-barcode"></i></div>
+                            <div class="ficha-row__label">Nº de Série</div>
+                            <div class="ficha-row__value">
+                                <code><?= htmlspecialchars($c['numero_serie'] ?? 'Desconhecido') ?></code>
+                            </div>
+                        </div>
+
+                        <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-solid fa-gauge-high"></i></div>
+                            <div class="ficha-row__label">Uso Recente</div>
+                            <div class="ficha-row__value">
+                                <span class="usage-badge usage-badge--cpu">
+                                    <i class="fa-solid fa-microchip" style="font-size:0.65rem;"></i> CPU <?= $cpu ?>%
+                                </span>
+                                <span class="usage-badge usage-badge--ram">
+                                    <i class="fa-solid fa-memory" style="font-size:0.65rem;"></i> RAM <?= $ram ?> MB
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ======= PERIFÉRICOS ======= -->
+                    <div class="perifericos-section">
+                        <div class="perifericos-section__title">
+                            <i class="fa-solid fa-keyboard"></i> Controle de Periféricos (Troca)
+                        </div>
+                        <div class="row g-2">
+
+                            <!-- Mouse -->
                             <div class="col-6">
-                                <div class="p-3 rounded" style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="small text-secondary"><i class="fa-solid fa-mouse me-1"></i> Mouse:</span>
+                                <div class="periferico-block">
+                                    <div class="periferico-block__label">
+                                        <i class="fa-solid fa-mouse"></i> Mouse
                                     </div>
-                                    <div class="mb-2">
+                                    <div class="periferico-block__status">
                                         <?php if ($c['mouse_trocado_em']): ?>
-                                            <span class="badge bg-success">Trocado em <?= date('d/m/Y', strtotime($c['mouse_trocado_em'])) ?></span>
+                                            <span class="badge-trocado">
+                                                <i class="fa-solid fa-check me-1" style="font-size:0.6rem;"></i>
+                                                <?= date('d/m/Y', strtotime($c['mouse_trocado_em'])) ?>
+                                            </span>
                                         <?php else: ?>
-                                            <span class="badge bg-secondary">Não registrado</span>
+                                            <span class="badge-nao-reg">Não registrado</span>
                                         <?php endif; ?>
                                     </div>
-                                    <!-- Form para Registrar Troca -->
-                                    <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" class="d-flex gap-1 align-items-center">
+                                    <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" class="periferico-form">
                                         <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                         <input type="hidden" name="tipo_periferico" value="mouse">
-                                        <input type="date" name="data" class="form-control form-control-sm bg-dark text-white border-secondary" required style="font-size: 0.8rem; padding: 0.1rem 0.3rem;">
-                                        <button type="submit" class="btn btn-outline-warning btn-sm py-0 px-2" title="Registrar Troca" style="font-size: 0.8rem;"><i class="fa-solid fa-check"></i></button>
+                                        <input type="date" name="data" required>
+                                        <button type="submit" class="btn-periferico" title="Registrar Troca">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </div>
 
-                            <!-- Troca de Teclado -->
+                            <!-- Teclado -->
                             <div class="col-6">
-                                <div class="p-3 rounded" style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="small text-secondary"><i class="fa-solid fa-keyboard me-1"></i> Teclado:</span>
+                                <div class="periferico-block">
+                                    <div class="periferico-block__label">
+                                        <i class="fa-solid fa-keyboard"></i> Teclado
                                     </div>
-                                    <div class="mb-2">
+                                    <div class="periferico-block__status">
                                         <?php if ($c['teclado_trocado_em']): ?>
-                                            <span class="badge bg-success">Trocado em <?= date('d/m/Y', strtotime($c['teclado_trocado_em'])) ?></span>
+                                            <span class="badge-trocado">
+                                                <i class="fa-solid fa-check me-1" style="font-size:0.6rem;"></i>
+                                                <?= date('d/m/Y', strtotime($c['teclado_trocado_em'])) ?>
+                                            </span>
                                         <?php else: ?>
-                                            <span class="badge bg-secondary">Não registrado</span>
+                                            <span class="badge-nao-reg">Não registrado</span>
                                         <?php endif; ?>
                                     </div>
-                                    <!-- Form para Registrar Troca -->
-                                    <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" class="d-flex gap-1 align-items-center">
+                                    <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" class="periferico-form">
                                         <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                         <input type="hidden" name="tipo_periferico" value="teclado">
-                                        <input type="date" name="data" class="form-control form-control-sm bg-dark text-white border-secondary" required style="font-size: 0.8rem; padding: 0.1rem 0.3rem;">
-                                        <button type="submit" class="btn btn-outline-warning btn-sm py-0 px-2" title="Registrar Troca" style="font-size: 0.8rem;"><i class="fa-solid fa-check"></i></button>
+                                        <input type="date" name="data" required>
+                                        <button type="submit" class="btn-periferico" title="Registrar Troca">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </div>
+
                         </div>
                     </div>
+
                 </div>
             </div>
         <?php endforeach; ?>
