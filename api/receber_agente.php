@@ -34,6 +34,7 @@ $mem_livre = $dados['ram_livre_mb'] ?? 0;
 $mem_total = $dados['ram_total_mb'] ?? 0;
 $discos = $dados['discos'] ?? [];
 $servicos = $dados['servicos'] ?? [];
+$conexoes = $dados['conexoes'] ?? [];
 
 $db = (new Database())->getConnection();
 
@@ -99,9 +100,27 @@ try {
         $stmtInsert->execute([$sensor_id, $s['valor']]);
     }
 
+    // 4. Salvar Conexões Ativas (Tráfego de Rede Real)
+    $stmtDeleteConn = $db->prepare("DELETE FROM conexoes WHERE dispositivo_id = ?");
+    $stmtDeleteConn->execute([$dispositivo_id]);
+
+    if (!empty($conexoes)) {
+        $stmtInsertConn = $db->prepare("INSERT INTO conexoes (dispositivo_id, origem, ip_origem, destino, servico, latencia, carga) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        foreach ($conexoes as $conn_data) {
+            $orig = $conn_data['origem'] ?? $hostname;
+            $ip_orig = $conn_data['ip_origem'] ?? $ip;
+            $dest = $conn_data['destino'] ?? 'Desconhecido';
+            $serv = $conn_data['servico'] ?? 'N/A';
+            $lat = isset($conn_data['latencia']) ? (int)$conn_data['latencia'] : 0;
+            $carg = isset($conn_data['carga']) ? (int)$conn_data['carga'] : 0;
+            
+            $stmtInsertConn->execute([$dispositivo_id, $orig, $ip_orig, $dest, $serv, $lat, $carg]);
+        }
+    }
+
     echo json_encode([
         'status' => 'sucesso',
-        'mensagem' => 'Dados recebidos e salvos no banco.',
+        'mensagem' => 'Dados e conexões recebidos e salvos no banco.',
         'recebido_em' => date('Y-m-d H:i:s')
     ]);
 

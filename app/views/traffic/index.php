@@ -91,31 +91,36 @@
 
 <?php ob_start(); ?>
 <script>
-    const trafficData = [
-        { origin: 'PC-FINANCEIRO-01', ip: '192.168.1.10', server: 'SRV-ARQUIVOS', service: 'SMB (445)', latency: '2ms', load: 15 },
-        { origin: 'PC-RECEPCAO-02', ip: '192.168.1.55', server: 'SRV-SISTEMA', service: 'HTTP (80)', latency: '5ms', load: 8 },
-        { origin: 'MACBOOK-CEO', ip: '192.168.1.100', server: 'SRV-BACKUP', service: 'Rsync (873)', latency: '12ms', load: 85 },
-        { origin: 'PC-VENDAS-03', ip: '192.168.1.33', server: 'SRV-SISTEMA', service: 'MySQL (3306)', latency: '3ms', load: 22 },
-        { origin: 'IMPRESSORA-RH', ip: '192.168.1.200', server: 'SRV-ARQUIVOS', service: 'LPD (515)', latency: '8ms', load: 2 },
-    ];
+    const trafficData = <?= json_encode($conexoes) ?>;
 
     function renderTraffic() {
         const body = document.getElementById('traffic-body');
         body.innerHTML = '';
         
+        if (!trafficData || trafficData.length === 0) {
+            body.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-secondary py-4">
+                        <i class="fa-solid fa-circle-info me-2"></i> Nenhuma conexão ativa registrada no banco de dados. Inicie o agente PowerShell para enviar dados de rede reais.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
         trafficData.forEach(item => {
             const loadClass = item.load > 80 ? 'bg-danger' : (item.load > 50 ? 'bg-warning' : 'bg-success');
             const row = `
                 <tr>
-                    <td><i class="fa-solid fa-desktop me-2 text-secondary"></i>${item.origin}</td>
-                    <td><code class="text-info">${item.ip}</code></td>
+                    <td><i class="fa-solid fa-desktop me-2 text-secondary"></i>\${item.origin}</td>
+                    <td><code class="text-info">\${item.ip}</code></td>
                     <td class="text-center text-primary"><i class="fa-solid fa-angles-right flow-arrow"></i></td>
-                    <td><i class="fa-solid fa-server me-2 text-primary"></i>${item.server}</td>
-                    <td><span class="badge border border-secondary text-light">${item.service}</span></td>
-                    <td>${item.latency}</td>
+                    <td><i class="fa-solid fa-server me-2 text-primary"></i>\${item.destino}</td>
+                    <td><span class="badge border border-secondary text-light">\${item.service}</span></td>
+                    <td>\${item.latency}</td>
                     <td style="width: 150px;">
                         <div class="progress" style="height: 6px; background-color: #1e2638;">
-                            <div class="progress-bar ${loadClass}" role="progressbar" style="width: ${item.load}%"></div>
+                            <div class="progress-bar \${loadClass}" role="progressbar" style="width: \${item.load}%"></div>
                         </div>
                     </td>
                 </tr>
@@ -126,13 +131,9 @@
 
     renderTraffic();
 
-    // Simulação de tempo real
+    // Recarregar os dados do banco a cada 30 segundos
     setInterval(() => {
-        // Atualizar latências aleatoriamente
-        trafficData.forEach(item => {
-            item.latency = Math.floor(Math.random() * 15 + 1) + 'ms';
-        });
-        renderTraffic();
-    }, 3000);
+        location.reload();
+    }, 30000);
 </script>
 <?php $extra_js = ob_get_clean(); ?>

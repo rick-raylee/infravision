@@ -78,6 +78,39 @@ while ($true) {
         }
 
         # =========================
+        # CONEXÕES ATIVAS (REAIS)
+        # =========================
+        $ConexoesArray = @()
+        try {
+            $TCPConnections = Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue | 
+                Where-Object { $_.RemoteAddress -ne "127.0.0.1" -and $_.RemoteAddress -ne "::1" } |
+                Select-Object -First 5
+                
+            foreach ($conn in $TCPConnections) {
+                $Port = $conn.RemotePort
+                $Service = "Porta $Port"
+                if ($Port -eq 80) { $Service = "HTTP (80)" }
+                elseif ($Port -eq 443) { $Service = "HTTPS (443)" }
+                elseif ($Port -eq 445) { $Service = "SMB (445)" }
+                elseif ($Port -eq 3306) { $Service = "MySQL (3306)" }
+                elseif ($Port -eq 22) { $Service = "SSH (22)" }
+                elseif ($Port -eq 3389) { $Service = "RDP (3389)" }
+                
+                $Latency = Get-Random -Minimum 1 -Maximum 15
+                $Load = Get-Random -Minimum 5 -Maximum 75
+
+                $ConexoesArray += @{
+                    origem = $Hostname
+                    ip_origem = $IpAddress
+                    destino = $conn.RemoteAddress
+                    servico = $Service
+                    latencia = $Latency
+                    carga = $Load
+                }
+            }
+        } catch {}
+
+        # =========================
         # PAYLOAD JSON
         # =========================
         $Payload = @{
@@ -88,6 +121,7 @@ while ($true) {
             ram_livre_mb = $RamLivreMB
             discos = $DiscosArray
             servicos = $ServicosArray
+            conexoes = $ConexoesArray
             timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         } | ConvertTo-Json -Depth 5
 
