@@ -109,6 +109,18 @@ switch ($path) {
         $controller->index();
         break;
 
+    case '/computers':
+        require 'app/controllers/ComputerController.php';
+        $controller = new ComputerController();
+        $controller->index();
+        break;
+
+    case '/computer/update-peripherals':
+        require 'app/controllers/ComputerController.php';
+        $controller = new ComputerController();
+        $controller->updatePeripherals();
+        break;
+
     case '/device/create':
         require 'app/controllers/DeviceController.php';
         $controller = new DeviceController();

@@ -37,6 +37,14 @@ $servicos = $dados['servicos'] ?? [];
 $conexoes = $dados['conexoes'] ?? [];
 $nobreak = $dados['nobreak'] ?? null;
 
+$tipo = $dados['tipo'] ?? 'servidor_windows';
+$usuario_logado = $dados['usuario_logado'] ?? null;
+$fabricante = $dados['fabricante'] ?? null;
+$modelo = $dados['modelo'] ?? null;
+$numero_serie = $dados['numero_serie'] ?? null;
+$sistema_operacional = $dados['sistema_operacional'] ?? null;
+$processador = $dados['processador'] ?? null;
+
 $db = (new Database())->getConnection();
 
 if (!$db) {
@@ -55,13 +63,23 @@ try {
 
     if ($dispositivo) {
         $dispositivo_id = $dispositivo['id'];
-        // Atualizar status e ultimo_check
-        $stmt = $db->prepare("UPDATE dispositivos SET status = 'online', ultimo_check = NOW() WHERE id = ?");
-        $stmt->execute([$dispositivo_id]);
+        // Atualizar status, tipo e ficha técnica
+        $stmt = $db->prepare("UPDATE dispositivos SET 
+            status = 'online', 
+            tipo = ?,
+            usuario_logado = ?,
+            fabricante = ?,
+            modelo = ?,
+            numero_serie = ?,
+            sistema_operacional = ?,
+            processador = ?,
+            ultimo_check = NOW() 
+            WHERE id = ?");
+        $stmt->execute([$tipo, $usuario_logado, $fabricante, $modelo, $numero_serie, $sistema_operacional, $processador, $dispositivo_id]);
     } else {
         // 2. Auto-discovery: Cadastrar dispositivo
-        $stmt = $db->prepare("INSERT INTO dispositivos (nome, ip, tipo, status, ultimo_check) VALUES (?, ?, 'servidor_windows', 'online', NOW())");
-        $stmt->execute([$hostname, $ip]);
+        $stmt = $db->prepare("INSERT INTO dispositivos (nome, ip, tipo, status, usuario_logado, fabricante, modelo, numero_serie, sistema_operacional, processador, ultimo_check) VALUES (?, ?, ?, 'online', ?, ?, ?, ?, ?, ?, NOW())");
+        $stmt->execute([$hostname, $ip, $tipo, $usuario_logado, $fabricante, $modelo, $numero_serie, $sistema_operacional, $processador]);
         $dispositivo_id = $db->lastInsertId();
     }
 

@@ -199,6 +199,9 @@ try {
         <a href="<?= $base_path ?>/servers" class="sidebar-link <?= $current_path === '/servers' ? 'active' : '' ?>">
             <i class="fa-solid fa-server"></i> Servidores
         </a>
+        <a href="<?= $base_path ?>/computers" class="sidebar-link <?= $current_path === '/computers' ? 'active' : '' ?>">
+            <i class="fa-solid fa-laptop"></i> Computadores
+        </a>
         <a href="<?= $base_path ?>/ups" class="sidebar-link <?= $current_path === '/ups' ? 'active' : '' ?>">
             <i class="fa-solid fa-battery-three-quarters"></i> Nobreaks & UPS
         </a>

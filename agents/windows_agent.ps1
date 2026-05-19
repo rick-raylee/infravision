@@ -126,6 +126,32 @@ while ($true) {
         }
 
         # =========================
+        # FICHA TÉCNICA (HARDWARE WMI)
+        # =========================
+        $CompSystem = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
+        $Bios = Get-CimInstance Win32_Bios -ErrorAction SilentlyContinue
+        $OSInfo = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
+        $Processor = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
+
+        $Fabricante = if ($CompSystem) { $CompSystem.Manufacturer } else { "Desconhecido" }
+        $Modelo = if ($CompSystem) { $CompSystem.Model } else { "Desconhecido" }
+        $SerialNumber = if ($Bios) { $Bios.SerialNumber } else { "Desconhecido" }
+        $SO = if ($OSInfo) { $OSInfo.Caption + " (" + $OSInfo.OSArchitecture + ")" } else { "Desconhecido" }
+        $CPUName = if ($Processor) { $Processor.Name } else { "Desconhecido" }
+        
+        # Obter usuário logado atual
+        $LoggedUser = if ($CompSystem) { $CompSystem.UserName } else { "" }
+        if ([string]::IsNullOrEmpty($LoggedUser)) {
+            $LoggedUser = [System.Environment]::UserName
+        }
+
+        # Classificar tipo (ProductType 1 = Workstation/Notebook/PC)
+        $TipoDispositivo = "servidor_windows"
+        if ($OSInfo -and $OSInfo.ProductType -eq 1) {
+            $TipoDispositivo = "computador"
+        }
+
+        # =========================
         # PAYLOAD JSON
         # =========================
         $PayloadHash = @{
@@ -137,6 +163,13 @@ while ($true) {
             discos = $DiscosArray
             servicos = $ServicosArray
             conexoes = $ConexoesArray
+            tipo = $TipoDispositivo
+            usuario_logado = $LoggedUser
+            fabricante = $Fabricante
+            modelo = $Modelo
+            numero_serie = $SerialNumber
+            sistema_operacional = $SO
+            processador = $CPUName
             timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         }
 
