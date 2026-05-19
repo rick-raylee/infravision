@@ -35,6 +35,7 @@ $mem_total = $dados['ram_total_mb'] ?? 0;
 $discos = $dados['discos'] ?? [];
 $servicos = $dados['servicos'] ?? [];
 $conexoes = $dados['conexoes'] ?? [];
+$nobreak = $dados['nobreak'] ?? null;
 
 $db = (new Database())->getConnection();
 
@@ -129,6 +130,48 @@ try {
             $carg = isset($conn_data['carga']) ? (int)$conn_data['carga'] : 0;
             
             $stmtInsertConn->execute([$dispositivo_id, $orig, $ip_orig, $dest, $serv, $lat, $carg]);
+        }
+    }
+
+    // 5. Salvar telemetria do nobreak associado (Auto-cobertura se houver bateria/UPS)
+    if ($nobreak) {
+        $nb_nome = $nobreak['nome'] ?? 'Nobreak USB';
+        $nb_ip = $nobreak['ip'] ?? $ip;
+        $nb_bateria = isset($nobreak['bateria']) ? (float)$nobreak['bateria'] : null;
+        $nb_autonomia = isset($nobreak['autonomia']) ? (float)$nobreak['autonomia'] : null;
+        $nb_tensao = isset($nobreak['tensao']) ? (float)$nobreak['tensao'] : 220;
+        $nb_carga = isset($nobreak['carga']) ? (float)$nobreak['carga'] : 15;
+        $nb_status = $nobreak['status'] ?? 'online';
+
+        // Verificar se já existe o nobreak cadastrado
+        $stmtNB = $db->prepare("SELECT id FROM dispositivos WHERE tipo = 'nobreak' AND nome = ? LIMIT 1");
+        $stmtNB->execute([$nb_nome]);
+        $nb_dispositivo = $stmtNB->fetch();
+
+        if ($nb_dispositivo) {
+            $nb_id = $nb_dispositivo['id'];
+            $stmtUpdateNB = $db->prepare("UPDATE dispositivos SET status = ?, ultimo_check = NOW() WHERE id = ?");
+            $stmtUpdateNB->execute([$nb_status, $nb_id]);
+        } else {
+            $stmtInsertNB = $db->prepare("INSERT INTO dispositivos (nome, ip, tipo, status, ultimo_check) VALUES (?, ?, 'nobreak', ?, NOW())");
+            $stmtInsertNB->execute([$nb_nome, $nb_ip, $nb_status]);
+            $nb_id = $db->lastInsertId();
+        }
+
+        // Salvar leituras para o Nobreak
+        $nb_sensores = [];
+        if ($nb_bateria !== null) {
+            $nb_sensores[] = ['nome' => 'Capacidade da Bateria (%)', 'tipo' => 'bateria', 'valor' => $nb_bateria];
+        }
+        if ($nb_autonomia !== null) {
+            $nb_sensores[] = ['nome' => 'Tempo de Autonomia (Minutos)', 'tipo' => 'uptime', 'valor' => $nb_autonomia];
+        }
+        $nb_sensores[] = ['nome' => 'Tensão de Entrada (V)', 'tipo' => 'tensao', 'valor' => $nb_tensao];
+        $nb_sensores[] = ['nome' => 'Carga (%)', 'tipo' => 'carga_nobreak', 'valor' => $nb_carga];
+
+        foreach ($nb_sensores as $s) {
+            $sensor_id = $getOrCreateSensor($db, $nb_id, $s['nome'], $s['tipo']);
+            $stmtInsert->execute([$sensor_id, $s['valor']]);
         }
     }
 

@@ -122,6 +122,7 @@ while ($true) {
             $BatteryPercent = $Battery.EstimatedChargeRemaining
             $BatteryRuntime = $Battery.EstimatedRunTime
             $BatteryStatus = $Battery.BatteryStatus
+            $BatteryName = $Battery.Name
         }
 
         # =========================
@@ -140,10 +141,15 @@ while ($true) {
         }
 
         if ($null -ne $BatteryPercent) {
-            $PayloadHash["ups_bateria"] = $BatteryPercent
-            $PayloadHash["ups_autonomia"] = $BatteryRuntime
-            $PayloadHash["ups_tensao"] = 220 # Valor padrão de rede elétrica
-            $PayloadHash["ups_carga"] = 15  # Carga estimada do PC/servidor
+            $PayloadHash["nobreak"] = @{
+                nome = if ($BatteryName) { $BatteryName } else { "Nobreak USB - " + $Hostname }
+                ip = $IpAddress
+                bateria = $BatteryPercent
+                autonomia = $BatteryRuntime
+                tensao = 220
+                carga = 15
+                status = if ($BatteryStatus -eq 1 -or $BatteryStatus -eq 8 -or $BatteryStatus -eq 9) { "alerta" } else { "online" }
+            }
         }
 
         $Payload = $PayloadHash | ConvertTo-Json -Depth 5
