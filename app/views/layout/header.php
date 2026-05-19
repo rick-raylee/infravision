@@ -1,6 +1,6 @@
 <?php
 $current_request = $_SERVER['REQUEST_URI'];
-$base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
+$base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
 $current_path = str_replace($base_path, '', $current_request);
 $current_path = explode('?', $current_path)[0];
 ?>
