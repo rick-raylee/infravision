@@ -1,3 +1,6 @@
+<?php
+$base_path = defined('BASE_PATH') ? BASE_PATH : (getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision'));
+?>
 <!DOCTYPE html>
 <html lang="pt-BR" data-bs-theme="dark">
 <head>
@@ -49,7 +52,7 @@
 
 <div class="login-card">
     <div class="text-center mb-4">
-        <img src="/infravision/assets/img/logo.png" alt="InfraVision" height="100" class="mb-3 rounded-circle shadow-lg">
+        <img src="<?= $base_path ?>/assets/img/logo.png" alt="InfraVision" height="100" class="mb-3 rounded-circle shadow-lg">
         <h2 class="fw-bold">Infra<span class="text-primary">Vision</span></h2>
         <p class="text-secondary small">Monitoring & Intelligence System</p>
     </div>
@@ -60,7 +63,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="/infravision/login" method="POST">
+    <form action="<?= $base_path ?>/login" method="POST">
         <div class="mb-3">
             <label for="email" class="form-label text-light">E-mail</label>
             <div class="input-group">

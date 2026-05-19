@@ -62,7 +62,7 @@ class AlertController {
         $stmt->bindParam(':msg', $msg);
         $stmt->execute();
 
-        header("Location: /infravision/alerts");
+        header("Location: " . BASE_PATH . "/alerts");
         exit;
     }
 }

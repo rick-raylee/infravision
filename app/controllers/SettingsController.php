@@ -4,7 +4,7 @@ class SettingsController {
     
     public function index() {
         if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
-            header("Location: /infravision/dashboard");
+            header("Location: " . BASE_PATH . "/dashboard");
             exit;
         }
 

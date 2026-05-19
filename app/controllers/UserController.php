@@ -4,7 +4,7 @@ class UserController {
     
     public function index() {
         if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
-            header("Location: /infravision/dashboard");
+            header("Location: " . BASE_PATH . "/dashboard");
             exit;
         }
 
@@ -25,7 +25,7 @@ class UserController {
 
     public function create() {
         if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
-            header("Location: /infravision/dashboard");
+            header("Location: " . BASE_PATH . "/dashboard");
             exit;
         }
 
@@ -57,7 +57,7 @@ class UserController {
         $stmt->bindParam(':nivel', $nivel);
 
         if ($stmt->execute()) {
-            header("Location: /infravision/users");
+            header("Location: " . BASE_PATH . "/users");
         } else {
             echo "Erro ao cadastrar usuário.";
         }
@@ -65,7 +65,7 @@ class UserController {
 
     public function edit() {
         if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
-            header("Location: /infravision/dashboard");
+            header("Location: " . BASE_PATH . "/dashboard");
             exit;
         }
 
@@ -80,7 +80,7 @@ class UserController {
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$usuario) {
-            header("Location: /infravision/users");
+            header("Location: " . BASE_PATH . "/users");
             exit;
         }
 
@@ -120,7 +120,7 @@ class UserController {
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            header("Location: /infravision/users");
+            header("Location: " . BASE_PATH . "/users");
         } else {
             echo "Erro ao atualizar usuário.";
         }
@@ -147,7 +147,7 @@ class UserController {
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
-            header("Location: /infravision/users");
+            header("Location: " . BASE_PATH . "/users");
         } else {
             echo "Erro ao excluir usuário.";
         }

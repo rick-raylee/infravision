@@ -4,7 +4,7 @@ class AlertContactController {
     
     public function index() {
         if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
-            header("Location: /infravision/dashboard");
+            header("Location: " . BASE_PATH . "/dashboard");
             exit;
         }
 
@@ -24,7 +24,7 @@ class AlertContactController {
 
     public function create() {
         if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
-            header("Location: /infravision/dashboard");
+            header("Location: " . BASE_PATH . "/dashboard");
             exit;
         }
 
@@ -53,7 +53,7 @@ class AlertContactController {
         $stmt->bindParam(':destino', $destino);
 
         if ($stmt->execute()) {
-            header("Location: /infravision/alert-contacts");
+            header("Location: " . BASE_PATH . "/alert-contacts");
         } else {
             echo "Erro ao cadastrar contato.";
         }

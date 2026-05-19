@@ -4,7 +4,7 @@ class ReportController {
     
     public function inventory() {
         if (($_SESSION['usuario_nivel'] ?? '') === '') {
-            header("Location: /infravision/login");
+            header("Location: " . BASE_PATH . "/login");
             exit;
         }
 

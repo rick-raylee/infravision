@@ -5,7 +5,7 @@ class DeviceController {
     public function create() {
         // Verificar se é admin
         if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
-            header("Location: /infravision/dashboard");
+            header("Location: " . BASE_PATH . "/dashboard");
             exit;
         }
 
@@ -37,7 +37,7 @@ class DeviceController {
         $stmt->bindParam(':status', $status);
 
         if ($stmt->execute()) {
-            header("Location: /infravision/servers");
+            header("Location: " . BASE_PATH . "/servers");
         } else {
             echo "Erro ao cadastrar dispositivo.";
         }
