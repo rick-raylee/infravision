@@ -1,11 +1,18 @@
 <?php
 
 class Database {
-    private $host = "localhost";
-    private $db_name = "infravision";
-    private $username = "root";
-    private $password = "";
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     public $conn;
+
+    public function __construct() {
+        $this->host = getenv('DB_HOST') !== false ? getenv('DB_HOST') : "localhost";
+        $this->db_name = getenv('DB_NAME') !== false ? getenv('DB_NAME') : "infravision";
+        $this->username = getenv('DB_USER') !== false ? getenv('DB_USER') : "root";
+        $this->password = getenv('DB_PASS') !== false ? getenv('DB_PASS') : "";
+    }
 
     public function getConnection() {
         $this->conn = null;

@@ -25,7 +25,7 @@ class ServerController {
             ];
         }
 
-        $base_path = '/infravision';
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
         $current_path = '/servers';
         
         require 'app/views/layout/header.php';
@@ -35,7 +35,7 @@ class ServerController {
 
     public function details() {
         $server_name = $_GET['nome'] ?? 'Servidor Desconhecido';
-        $base_path = '/infravision';
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
         $current_path = '/servers';
         
         require 'app/views/layout/header.php';

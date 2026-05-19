@@ -6,7 +6,7 @@ require_once 'config/database.php';
 
 // Roteador super simples para o MVC
 $request = $_SERVER['REQUEST_URI'];
-$base_path = '/infravision'; // Ajuste conforme o Alias/DocumentRoot do seu servidor
+$base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision'; // Ajuste conforme o Alias/DocumentRoot do seu servidor
 $path = str_replace($base_path, '', $request);
 $path = explode('?', $path)[0]; // Remover query string
 

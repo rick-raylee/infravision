@@ -20,7 +20,7 @@ class AuthController {
             $_SESSION['usuario_nome'] = 'Administrador';
             $_SESSION['usuario_nivel'] = 'admin';
             
-            $base_path = '/infravision';
+            $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
             header("Location: $base_path/dashboard");
             exit;
         } else {
@@ -31,7 +31,7 @@ class AuthController {
 
     public function logout() {
         session_destroy();
-        $base_path = '/infravision';
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
         header("Location: $base_path/login");
         exit;
     }

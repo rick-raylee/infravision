@@ -9,7 +9,7 @@ class DeviceController {
             exit;
         }
 
-        $base_path = '/infravision';
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
         require 'app/views/layout/header.php';
         require 'app/views/device/create.php';
         require 'app/views/layout/footer.php';

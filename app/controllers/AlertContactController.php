@@ -16,7 +16,7 @@ class AlertContactController {
         $stmt->execute();
         $contatos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $base_path = '/infravision';
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
         require 'app/views/layout/header.php';
         require 'app/views/alert_contact/index.php';
         require 'app/views/layout/footer.php';
@@ -28,7 +28,7 @@ class AlertContactController {
             exit;
         }
 
-        $base_path = '/infravision';
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
         require 'app/views/layout/header.php';
         require 'app/views/alert_contact/create.php';
         require 'app/views/layout/footer.php';

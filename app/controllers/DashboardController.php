@@ -19,7 +19,7 @@ class DashboardController {
             'vms_total' => 18 // Mock por enquanto (seria via vCenter API)
         ];
         
-        $base_path = '/infravision';
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : '/infravision';
         $current_path = '/dashboard';
         
         require 'app/views/layout/header.php';
