@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# Impede acesso direto a arquivos que não existem, redirecionando para index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
