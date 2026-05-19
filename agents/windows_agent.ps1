@@ -139,10 +139,30 @@ while ($true) {
         $SO = if ($OSInfo) { $OSInfo.Caption + " (" + $OSInfo.OSArchitecture + ")" } else { "Desconhecido" }
         $CPUName = if ($Processor) { $Processor.Name } else { "Desconhecido" }
         
-        # Obter usuário logado atual
-        $LoggedUser = if ($CompSystem) { $CompSystem.UserName } else { "" }
+        # Obter usuário logado atual de forma robusta (explorer.exe owner)
+        $LoggedUser = $null
+        try {
+            $ExplorerProcesses = Get-CimInstance Win32_Process -Filter "name='explorer.exe'" -ErrorAction SilentlyContinue
+            if ($ExplorerProcesses) {
+                foreach ($proc in $ExplorerProcesses) {
+                    $OwnerInfo = Invoke-CimMethod -InputObject $proc -MethodName GetOwner -ErrorAction SilentlyContinue
+                    if ($OwnerInfo -and $OwnerInfo.User) {
+                        if ($OwnerInfo.Domain) {
+                            $LoggedUser = $OwnerInfo.Domain + "\" + $OwnerInfo.User
+                        } else {
+                            $LoggedUser = $OwnerInfo.User
+                        }
+                        break
+                    }
+                }
+            }
+        } catch {}
+
         if ([string]::IsNullOrEmpty($LoggedUser)) {
-            $LoggedUser = [System.Environment]::UserName
+            $LoggedUser = if ($CompSystem) { $CompSystem.UserName } else { "" }
+        }
+        if ([string]::IsNullOrEmpty($LoggedUser)) {
+            $LoggedUser = [System.Environment]::UserDomainName + "\" + [System.Environment]::UserName
         }
 
         # Classificar tipo (ProductType 1 = Workstation/Notebook/PC)
