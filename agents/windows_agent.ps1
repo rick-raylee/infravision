@@ -8,6 +8,22 @@ $IntervaloSegundos = 60
 
 Write-Host "InfraVision Agent iniciado..." -ForegroundColor Green
 
+if ($ApiUrl -like "*SEU_IP_AQUI*" -or $AuthToken -eq "SEU_TOKEN_AQUI") {
+    Write-Host ""
+    Write-Host "[!] CONFIGURAÇÃO NECESSÁRIA [!]" -ForegroundColor Red
+    Write-Host "Por favor, edite as linhas 5 e 6 de 'windows_agent.ps1' com as suas credenciais reais." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Se estiver rodando no XAMPP localmente, use:" -ForegroundColor Cyan
+    Write-Host "  `$ApiUrl = `"http://localhost/infravision/api/receber_agente.php`"" -ForegroundColor Cyan
+    Write-Host "  `$AuthToken = `"QUALQUER_VALOR`"" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Se estiver rodando no Render, use:" -ForegroundColor Cyan
+    Write-Host "  `$ApiUrl = `"https://sua-url-do-render.onrender.com/api/receber_agente.php`"" -ForegroundColor Cyan
+    Write-Host "  `$AuthToken = `"QUALQUER_VALOR`"" -ForegroundColor Cyan
+    Write-Host ""
+    Exit
+}
+
 while ($true) {
 
     try {
