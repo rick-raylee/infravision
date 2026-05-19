@@ -1,28 +1,139 @@
+param (
+    [string]$ServerUrl,
+    [string]$Token,
+    [switch]$Install,
+    [switch]$Uninstall,
+    [switch]$Reset
+)
+
 # ============================
-# InfraVision Agent - FIXED
+# InfraVision Agent
 # ============================
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ([string]::IsNullOrEmpty($ScriptDir)) {
+    $ScriptDir = Get-Location
+}
+$ConfigPath = Join-Path $ScriptDir "agent_config.json"
 
-$ApiUrl = "http://SEU_IP_AQUI/infravision/api/receber_agente.php"
-$AuthToken = "SEU_TOKEN_AQUI"
-$IntervaloSegundos = 60
+# Redefinir configuração
+if ($Reset) {
+    if (Test-Path $ConfigPath) {
+        Remove-Item $ConfigPath -Force
+        Write-Host "Arquivo de configuração 'agent_config.json' removido." -ForegroundColor Yellow
+    }
+}
 
-Write-Host "InfraVision Agent iniciado..." -ForegroundColor Green
-
-if ($ApiUrl -like "*SEU_IP_AQUI*" -or $AuthToken -eq "SEU_TOKEN_AQUI") {
-    Write-Host ""
-    Write-Host "[!] CONFIGURAÇÃO NECESSÁRIA [!]" -ForegroundColor Red
-    Write-Host "Por favor, edite as linhas 5 e 6 de 'windows_agent.ps1' com as suas credenciais reais." -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Se estiver rodando no XAMPP localmente, use:" -ForegroundColor Cyan
-    Write-Host "  `$ApiUrl = `"http://localhost/infravision/api/receber_agente.php`"" -ForegroundColor Cyan
-    Write-Host "  `$AuthToken = `"QUALQUER_VALOR`"" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Se estiver rodando no Render, use:" -ForegroundColor Cyan
-    Write-Host "  `$ApiUrl = `"https://sua-url-do-render.onrender.com/api/receber_agente.php`"" -ForegroundColor Cyan
-    Write-Host "  `$AuthToken = `"QUALQUER_VALOR`"" -ForegroundColor Cyan
-    Write-Host ""
+# Instalar no Agendador de Tarefas do Windows (Inicialização automática)
+if ($Install) {
+    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        Write-Host "ERRO: Você precisa executar o PowerShell como Administrador para instalar o agente como serviço!" -ForegroundColor Red
+        Exit
+    }
+    
+    $ScriptPath = $MyInvocation.MyCommand.Path
+    $TaskName = "InfraVisionAgent"
+    $Command = "powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$ScriptPath`""
+    
+    # Criar tarefa usando schtasks
+    & schtasks.exe /Create /TN $TaskName /TR $Command /SC ONSTART /RU "SYSTEM" /F 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "==================================================" -ForegroundColor Green
+        Write-Host "   AGENTE INSTALADO COM SUCESSO NO SISTEMA!" -ForegroundColor Green
+        Write-Host "==================================================" -ForegroundColor Green
+        Write-Host "O agente InfraVision rodará de forma oculta em segundo plano" -ForegroundColor White
+        Write-Host "toda vez que o Windows iniciar (como SYSTEM)." -ForegroundColor White
+        Write-Host ""
+        Write-Host "Para iniciar o serviço agora sem precisar reiniciar a máquina, rode:" -ForegroundColor Cyan
+        Write-Host "  schtasks.exe /Run /TN `"$TaskName`"" -ForegroundColor Cyan
+    } else {
+        Write-Host "Erro ao cadastrar agente no Agendador de Tarefas do Windows." -ForegroundColor Red
+    }
     Exit
 }
+
+# Desinstalar do Agendador de Tarefas
+if ($Uninstall) {
+    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        Write-Host "ERRO: Você precisa executar o PowerShell como Administrador para desinstalar o agente!" -ForegroundColor Red
+        Exit
+    }
+    & schtasks.exe /Delete /TN "InfraVisionAgent" /F 2>&1 | Out-Null
+    Write-Host "Agente desinstalado com sucesso do Agendador de Tarefas." -ForegroundColor Yellow
+    Exit
+}
+
+# Configuração via Parâmetros de Linha de Comando
+if ($ServerUrl) {
+    $CleanUrl = $ServerUrl
+    if (-not ($CleanUrl.StartsWith("http://") -or $CleanUrl.StartsWith("https://"))) {
+        $CleanUrl = "http://" + $CleanUrl
+    }
+    if (-not $CleanUrl.EndsWith("receber_agente.php")) {
+        $CleanUrl = $CleanUrl.TrimEnd("/") + "/api/receber_agente.php"
+    }
+    $CleanToken = if ($Token) { $Token } else { "QUALQUER_TOKEN" }
+    
+    $Config = @{
+        ApiUrl = $CleanUrl
+        AuthToken = $CleanToken
+        Intervalo = 60
+    }
+    $Config | ConvertTo-Json | Out-File $ConfigPath -Encoding UTF8 -Force
+    Write-Host "Configuração salva com sucesso por parâmetro em: $ConfigPath" -ForegroundColor Green
+}
+
+# Configuração Interativa (Caso não exista arquivo de config)
+if (-not (Test-Path $ConfigPath)) {
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host "     BEM-VINDO AO INFRAVISION AGENT" -ForegroundColor Green
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host "Nenhuma configuração encontrada. Vamos configurar agora." -ForegroundColor White
+    Write-Host ""
+    
+    $InputUrl = Read-Host "Digite a URL ou IP do InfraVision (Ex: localhost/infravision ou seu-nock.onrender.com)"
+    if ([string]::IsNullOrEmpty($InputUrl)) {
+        $InputUrl = "localhost/infravision"
+    }
+    
+    if (-not ($InputUrl.StartsWith("http://") -or $InputUrl.StartsWith("https://"))) {
+        $InputUrl = "http://" + $InputUrl
+    }
+    if (-not $InputUrl.EndsWith("receber_agente.php")) {
+        $InputUrl = $InputUrl.TrimEnd("/") + "/api/receber_agente.php"
+    }
+    
+    $InputToken = Read-Host "Digite o token de autenticação [Deixe em branco para o padrão]"
+    if ([string]::IsNullOrEmpty($InputToken)) { 
+        $InputToken = "QUALQUER_TOKEN" 
+    }
+    
+    $Config = @{
+        ApiUrl = $InputUrl
+        AuthToken = $InputToken
+        Intervalo = 60
+    }
+    $Config | ConvertTo-Json | Out-File $ConfigPath -Encoding UTF8 -Force
+    Write-Host ""
+    Write-Host "Configuração salva em: $ConfigPath" -ForegroundColor Green
+    Write-Host "DICA: Para instalar como tarefa de inicialização em segundo plano, rode:" -ForegroundColor Gray
+    Write-Host "      powershell -ExecutionPolicy Bypass -File windows_agent.ps1 -Install" -ForegroundColor Gray
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host ""
+}
+
+# Carregar Arquivo de Configuração
+$ConfigContent = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+$ApiUrl = $ConfigContent.ApiUrl
+$AuthToken = $ConfigContent.AuthToken
+$IntervaloSegundos = if ($ConfigContent.Intervalo) { $ConfigContent.Intervalo } else { 60 }
+
+Write-Host "InfraVision Agent iniciado com sucesso!" -ForegroundColor Green
+Write-Host "URL de Destino: $ApiUrl" -ForegroundColor Cyan
+Write-Host "Intervalo: $IntervaloSegundos segundos" -ForegroundColor Cyan
+Write-Host "Pressione Ctrl+C para encerrar." -ForegroundColor Yellow
+Write-Host ""
 
 while ($true) {
 
@@ -34,7 +145,7 @@ while ($true) {
         $Hostname = $env:COMPUTERNAME
 
         # =========================
-        # IP (CORRIGIDO - SEM INTERFACE FIXA)
+        # IP (SEM INTERFACE FIXA)
         # =========================
         $IpAddress = Get-NetIPAddress `
             -AddressFamily IPv4 `
@@ -45,19 +156,18 @@ while ($true) {
             } |
             Select-Object -First 1 -ExpandProperty IPAddress
 
-        # fallback caso falhe
         if (-not $IpAddress) {
             $IpAddress = (hostname)
         }
 
         # =========================
-        # CPU (MODERNO)
+        # CPU
         # =========================
         $CpuLoad = (Get-CimInstance Win32_Processor |
             Measure-Object -Property LoadPercentage -Average).Average
 
         # =========================
-        # RAM (MODERNO)
+        # RAM
         # =========================
         $OS = Get-CimInstance Win32_OperatingSystem
 
@@ -232,7 +342,7 @@ while ($true) {
         }
 
         # =========================
-        # ENVIO (FORÇANDO TLS 1.2)
+        # ENVIO (TLS 1.2)
         # =========================
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -244,7 +354,7 @@ while ($true) {
             -TimeoutSec 10 `
             -ErrorAction Stop
 
-        Write-Host "OK [$((Get-Date).ToString('HH:mm:ss'))] CPU:$CpuLoad% RAM:$RamLivreMB MB" -ForegroundColor Cyan
+        Write-Host "OK [$((Get-Date).ToString('HH:mm:ss'))] CPU:$([math]::Round($CpuLoad,1))% RAM:$RamLivreMB MB" -ForegroundColor Cyan
 
     }
     catch {
