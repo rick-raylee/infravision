@@ -3,6 +3,18 @@ $current_request = $_SERVER['REQUEST_URI'];
 $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
 $current_path = str_replace($base_path, '', $current_request);
 $current_path = explode('?', $current_path)[0];
+
+// Buscar quantidade de alertas ativos
+$alert_count = 0;
+try {
+    require_once __DIR__ . '/../../../config/database.php';
+    $database = new Database();
+    $db = $database->getConnection();
+    if ($db) {
+        $stmtAlertsCount = $db->query("SELECT COUNT(*) FROM alertas WHERE status = 'ativo'");
+        $alert_count = (int)$stmtAlertsCount->fetchColumn();
+    }
+} catch (Exception $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR" data-bs-theme="dark">
@@ -154,7 +166,9 @@ $current_path = explode('?', $current_path)[0];
         <!-- 3. Alertas (Agora em primeiro no menu) -->
         <a href="<?= $base_path ?>/alerts" class="sidebar-link <?= $current_path === '/alerts' ? 'active' : '' ?> mb-2">
             <i class="fa-solid fa-bell text-danger"></i> <strong>Alertas Críticos</strong> 
-            <span class="badge bg-danger rounded-pill ms-auto">3</span>
+            <?php if ($alert_count > 0): ?>
+                <span class="badge bg-danger rounded-pill ms-auto"><?= $alert_count ?></span>
+            <?php endif; ?>
         </a>
 
         <hr class="border-secondary border-opacity-10 mx-3 mb-3">
@@ -184,6 +198,9 @@ $current_path = explode('?', $current_path)[0];
         </a>
         <a href="<?= $base_path ?>/servers" class="sidebar-link <?= $current_path === '/servers' ? 'active' : '' ?>">
             <i class="fa-solid fa-server"></i> Servidores
+        </a>
+        <a href="<?= $base_path ?>/ups" class="sidebar-link <?= $current_path === '/ups' ? 'active' : '' ?>">
+            <i class="fa-solid fa-battery-three-quarters"></i> Nobreaks & UPS
         </a>
         <a href="<?= $base_path ?>/virtualization" class="sidebar-link <?= $current_path === '/virtualization' ? 'active' : '' ?>">
             <i class="fa-solid fa-cubes"></i> Virtualização

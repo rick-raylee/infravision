@@ -92,6 +92,20 @@ try {
         $sensoresParaSalvar[] = ['nome' => "Disco Livre ($letra) GB", 'tipo' => 'disco', 'valor' => $livre];
     }
 
+    // Adicionar sensores do nobreak/bateria se existirem
+    if (isset($dados['ups_bateria'])) {
+        $sensoresParaSalvar[] = ['nome' => 'Capacidade da Bateria (%)', 'tipo' => 'bateria', 'valor' => $dados['ups_bateria']];
+    }
+    if (isset($dados['ups_autonomia'])) {
+        $sensoresParaSalvar[] = ['nome' => 'Tempo de Autonomia (Minutos)', 'tipo' => 'uptime', 'valor' => $dados['ups_autonomia']];
+    }
+    if (isset($dados['ups_tensao'])) {
+        $sensoresParaSalvar[] = ['nome' => 'Tensão de Entrada (V)', 'tipo' => 'tensao', 'valor' => $dados['ups_tensao']];
+    }
+    if (isset($dados['ups_carga'])) {
+        $sensoresParaSalvar[] = ['nome' => 'Carga (%)', 'tipo' => 'carga_nobreak', 'valor' => $dados['ups_carga']];
+    }
+
     // Processar sensores e inserir leituras
     $stmtInsert = $db->prepare("INSERT INTO leituras (sensor_id, valor, data_leitura) VALUES (?, ?, NOW())");
     

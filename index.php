@@ -103,6 +103,12 @@ switch ($path) {
         $controller->index();
         break;
 
+    case '/ups':
+        require 'app/controllers/UpsController.php';
+        $controller = new UpsController();
+        $controller->index();
+        break;
+
     case '/device/create':
         require 'app/controllers/DeviceController.php';
         $controller = new DeviceController();

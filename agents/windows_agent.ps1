@@ -111,9 +111,23 @@ while ($true) {
         } catch {}
 
         # =========================
+        # BATERIA / UPS (WMI)
+        # =========================
+        $Battery = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue
+        $BatteryPercent = $null
+        $BatteryRuntime = $null
+        $BatteryStatus = $null
+        
+        if ($Battery) {
+            $BatteryPercent = $Battery.EstimatedChargeRemaining
+            $BatteryRuntime = $Battery.EstimatedRunTime
+            $BatteryStatus = $Battery.BatteryStatus
+        }
+
+        # =========================
         # PAYLOAD JSON
         # =========================
-        $Payload = @{
+        $PayloadHash = @{
             hostname = $Hostname
             ip = $IpAddress
             cpu_load = [math]::Round($CpuLoad, 2)
@@ -123,7 +137,16 @@ while ($true) {
             servicos = $ServicosArray
             conexoes = $ConexoesArray
             timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-        } | ConvertTo-Json -Depth 5
+        }
+
+        if ($null -ne $BatteryPercent) {
+            $PayloadHash["ups_bateria"] = $BatteryPercent
+            $PayloadHash["ups_autonomia"] = $BatteryRuntime
+            $PayloadHash["ups_tensao"] = 220 # Valor padrão de rede elétrica
+            $PayloadHash["ups_carga"] = 15  # Carga estimada do PC/servidor
+        }
+
+        $Payload = $PayloadHash | ConvertTo-Json -Depth 5
 
         # =========================
         # HEADERS
