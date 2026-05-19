@@ -140,38 +140,37 @@
                             </tr>
                         </thead>
                         <tbody id="tabela-dispositivos">
-                            <tr>
-                                <td><span class="status-indicator status-online"></span> Online</td>
-                                <td>SRV-DC-01</td>
-                                <td>Windows Server</td>
-                                <td>10.0.0.5</td>
-                                <td>45 dias</td>
-                                <td>Agora mesmo</td>
-                            </tr>
-                            <tr>
-                                <td><span class="status-indicator status-online"></span> Online</td>
-                                <td>SRV-DB-01</td>
-                                <td>Linux / MySQL</td>
-                                <td>10.0.0.10</td>
-                                <td>120 dias</td>
-                                <td>Agora mesmo</td>
-                            </tr>
-                            <tr>
-                                <td><span class="status-indicator status-danger"></span> Crítico</td>
-                                <td>SW-CORE-01</td>
-                                <td>Switch L3</td>
-                                <td>10.0.0.1</td>
-                                <td>2 dias</td>
-                                <td class="text-danger">Alta latência (150ms)</td>
-                            </tr>
-                            <tr>
-                                <td><span class="status-indicator status-warning"></span> Alerta</td>
-                                <td>STORAGE-SAN</td>
-                                <td>Storage</td>
-                                <td>10.0.0.50</td>
-                                <td>90 dias</td>
-                                <td class="text-warning">Disco 3 - Warning SMART</td>
-                            </tr>
+                            <?php if (empty($dispositivos)): ?>
+                                <tr>
+                                    <td colspan="6" class="text-center text-secondary py-4">
+                                        <i class="fa-solid fa-circle-info me-2"></i> Nenhum dispositivo cadastrado. Execute o agente coletor para enviar dados reais.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($dispositivos as $d): ?>
+                                    <tr>
+                                        <td>
+                                            <span class="status-indicator status-<?= $d['status'] === 'online' ? 'online' : ($d['status'] === 'alerta' ? 'warning' : ($d['status'] === 'critico' ? 'danger' : 'offline')) ?>"></span>
+                                            <?= ucfirst($d['status']) ?>
+                                        </td>
+                                        <td><strong><?= htmlspecialchars($d['hostname']) ?></strong></td>
+                                        <td><?= htmlspecialchars($d['tipo']) ?></td>
+                                        <td><?= htmlspecialchars($d['ip']) ?></td>
+                                        <td>
+                                            <?php 
+                                            if ($d['ultimo_check']) {
+                                                echo 'Ativo';
+                                            } else {
+                                                echo 'Pendente';
+                                            }
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <?= $d['ultimo_check'] ? date('d/m/Y H:i:s', strtotime($d['ultimo_check'])) : 'Nunca' ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -208,8 +207,16 @@
     netChart.render();
 
     // Gráfico de CPU
+    var cpuData = <?= json_encode(array_map('floatval', array_column($topCpu, 'valor'))) ?>;
+    var cpuLabels = <?= json_encode(array_column($topCpu, 'nome')) ?>;
+    
+    if (cpuData.length === 0) {
+        cpuData = [0];
+        cpuLabels = ['Sem dados'];
+    }
+
     var cpuOptions = {
-        series: [{ data: [95, 80, 75, 60, 45] }],
+        series: [{ data: cpuData }],
         chart: { type: 'bar', height: 300 },
         colors: [function({ value }) {
             if (value >= 90) return '#ef4444';
@@ -218,14 +225,14 @@
         }],
         plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
         dataLabels: { enabled: true },
-        xaxis: { categories: ['SRV-DB-01', 'SRV-APP-02', 'SRV-DC-01', 'SRV-FILE-01', 'SRV-WEB-01'] }
+        xaxis: { categories: cpuLabels }
     };
     var cpuChart = new ApexCharts(document.querySelector("#cpuChart"), cpuOptions);
     cpuChart.render();
 
     // Simular Atualização em Tempo Real via AJAX
     setInterval(() => {
-        fetch('/infravision/api/dados_dashboard')
+        fetch('<?= $base_path ?>/api/dados_dashboard')
             .then(response => response.json())
             .then(data => {
                 // Atualizar Cards

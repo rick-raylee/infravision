@@ -30,4 +30,28 @@ class Device {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['total'];
     }
+
+    public function getAll() {
+        $query = "SELECT id, nome as hostname, ip, tipo, status, ultimo_check FROM " . $this->table_name . " ORDER BY criado_em DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getAllWithMetrics() {
+        $query = "SELECT d.id, d.nome as hostname, d.ip, d.tipo, d.status, d.ultimo_check,
+                         (SELECT l.valor FROM leituras l 
+                          JOIN sensores s ON l.sensor_id = s.id 
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'cpu' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as cpu_atual,
+                         (SELECT l.valor FROM leituras l 
+                          JOIN sensores s ON l.sensor_id = s.id 
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_atual
+                  FROM dispositivos d
+                  ORDER BY d.criado_em DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

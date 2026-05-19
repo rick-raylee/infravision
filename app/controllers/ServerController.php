@@ -8,8 +8,8 @@ class ServerController {
         $db = $database->getConnection();
         $deviceModel = new Device($db);
 
-        // Buscar todos os servidores cadastrados no banco
-        $servidores_db = $deviceModel->getAll();
+        // Buscar todos os servidores cadastrados no banco com métricas reais
+        $servidores_db = $deviceModel->getAllWithMetrics();
         
         // Mapear para o formato esperado pela view
         $servidores = [];
@@ -18,10 +18,10 @@ class ServerController {
                 'id' => $s['id'],
                 'nome' => $s['hostname'],
                 'ip' => $s['ip'],
-                'so' => $s['tipo'] . ' (Ativo)',
+                'so' => htmlspecialchars($s['tipo']) . ' (Ativo)',
                 'status' => $s['status'],
-                'cpu' => rand(5, 40), // Simulação de carga real até o agente conectar
-                'ram' => rand(10, 60)  // Simulação de carga real
+                'cpu' => $s['cpu_atual'] !== null ? round($s['cpu_atual']) : 0,
+                'ram' => $s['ram_atual'] !== null ? round($s['ram_atual']) : 0
             ];
         }
 
