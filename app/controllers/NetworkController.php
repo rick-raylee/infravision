@@ -1,12 +1,48 @@
 <?php
 
 class NetworkController {
+
+    private static function agruparConexoesPorOrigem(array $conexoes): array {
+        $grupos = [];
+
+        foreach ($conexoes as $c) {
+            $origem = trim((string)($c['origem'] ?? ''));
+            $ip = trim((string)($c['ip_origem'] ?? ''));
+            $chave = $origem . '|' . $ip;
+
+            if (!isset($grupos[$chave])) {
+                $grupos[$chave] = [
+                    'origem' => $origem,
+                    'ip_origem' => $ip,
+                    'total' => 0,
+                    'destinos' => [],
+                    'servicos' => [],
+                    'latencia_max' => 0,
+                ];
+            }
+
+            $grupos[$chave]['total']++;
+            $dest = trim((string)($c['destino'] ?? ''));
+            if ($dest !== '' && !in_array($dest, $grupos[$chave]['destinos'], true)) {
+                $grupos[$chave]['destinos'][] = $dest;
+            }
+            $svc = trim((string)($c['servico'] ?? ''));
+            if ($svc !== '' && !in_array($svc, $grupos[$chave]['servicos'], true)) {
+                $grupos[$chave]['servicos'][] = $svc;
+            }
+            $grupos[$chave]['latencia_max'] = max($grupos[$chave]['latencia_max'], (int)($c['latencia'] ?? 0));
+        }
+
+        $lista = array_values($grupos);
+        usort($lista, fn($a, $b) => $b['total'] <=> $a['total']);
+        return $lista;
+    }
     
     public function index() {
         $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
 
         require_once 'config/database.php';
-        $conexoes = [];
+        $hosts_rede = [];
         $dispositivos_rede = [];
         $alertas_ips = [];
         $servico_stats = [];
@@ -14,9 +50,9 @@ class NetworkController {
         $db = (new Database())->getConnection();
         if ($db) {
             $stmt = $db->prepare("SELECT origem, ip_origem, destino, servico, latencia, carga
-                                  FROM conexoes ORDER BY id DESC LIMIT 20");
+                                  FROM conexoes ORDER BY id DESC LIMIT 200");
             $stmt->execute();
-            $conexoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $hosts_rede = self::agruparConexoesPorOrigem($stmt->fetchAll(PDO::FETCH_ASSOC));
 
             $stmtDev = $db->prepare("SELECT nome, ip, tipo, status, ultimo_check
                                      FROM dispositivos

@@ -4,7 +4,7 @@
             <h1><i class="fa-solid fa-shield-halved me-2 text-primary"></i> Rede & Firewall</h1>
             <a href="<?= $base_path ?>/device/create" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Novo Dispositivo</a>
         </div>
-        <p class="text-secondary">Conexões e dispositivos de rede monitorados via agente e banco de dados.</p>
+        <p class="text-secondary">Visão resumida por estação (uma linha por máquina). O detalhe de cada conexão está em <a href="<?= $base_path ?>/traffic" class="text-primary">Monitor de Conexões</a>.</p>
     </div>
 </div>
 
@@ -12,38 +12,50 @@
     <div class="col-12 col-lg-8">
         <div class="noc-card">
             <div class="noc-card-header">
-                <span><i class="fa-solid fa-arrows-left-right me-2"></i> Conexões ativas (agente)</span>
-                <span class="badge bg-<?= !empty($conexoes) ? 'success' : 'secondary' ?>"><?= !empty($conexoes) ? 'Com dados' : 'Sem dados' ?></span>
+                <span><i class="fa-solid fa-network-wired me-2"></i> Estações com tráfego ativo</span>
+                <span class="badge bg-<?= !empty($hosts_rede) ? 'success' : 'secondary' ?>"><?= count($hosts_rede) ?> máquina(s)</span>
             </div>
             <div class="noc-card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Origem</th>
+                                <th>Máquina</th>
                                 <th>IP</th>
-                                <th>Destino</th>
-                                <th>Serviço</th>
-                                <th>Latência</th>
-                                <th>Carga</th>
+                                <th class="text-center">Conexões</th>
+                                <th>Destinos (amostra)</th>
+                                <th>Serviços</th>
+                                <th>Lat. máx.</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (empty($conexoes)): ?>
+                            <?php if (empty($hosts_rede)): ?>
                                 <tr>
                                     <td colspan="6" class="text-center text-secondary py-4">
                                         Nenhuma conexão registrada. O agente envia conexões em cada coleta.
                                     </td>
                                 </tr>
                             <?php else: ?>
-                                <?php foreach ($conexoes as $c): ?>
+                                <?php foreach ($hosts_rede as $h): ?>
+                                    <?php
+                                        $destinos = array_slice($h['destinos'], 0, 3);
+                                        $destinoTxt = implode(', ', $destinos);
+                                        if (count($h['destinos']) > 3) {
+                                            $destinoTxt .= ' +' . (count($h['destinos']) - 3);
+                                        }
+                                        $servicos = array_slice($h['servicos'], 0, 2);
+                                        $servicoTxt = implode(', ', $servicos);
+                                        if (count($h['servicos']) > 2) {
+                                            $servicoTxt .= ' +' . (count($h['servicos']) - 2);
+                                        }
+                                    ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($c['origem']) ?></td>
-                                        <td><code class="text-info"><?= htmlspecialchars($c['ip_origem']) ?></code></td>
-                                        <td><?= htmlspecialchars($c['destino']) ?></td>
-                                        <td><?= htmlspecialchars($c['servico']) ?></td>
-                                        <td><?= (int)$c['latencia'] ?> ms</td>
-                                        <td><?= (int)$c['carga'] ?>%</td>
+                                        <td><i class="fa-solid fa-desktop me-2 text-secondary"></i><?= htmlspecialchars($h['origem']) ?></td>
+                                        <td><code class="text-info"><?= htmlspecialchars($h['ip_origem']) ?></code></td>
+                                        <td class="text-center"><span class="badge bg-primary"><?= (int)$h['total'] ?></span></td>
+                                        <td class="small text-secondary"><?= htmlspecialchars($destinoTxt ?: '—') ?></td>
+                                        <td class="small"><?= htmlspecialchars($servicoTxt ?: '—') ?></td>
+                                        <td><?= (int)$h['latencia_max'] ?> ms</td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
