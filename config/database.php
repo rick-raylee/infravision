@@ -8,6 +8,33 @@ class Database {
     private $password;
     public $conn;
 
+    private function loadEnv() {
+        $envFile = __DIR__ . '/../.env';
+        if (file_exists($envFile)) {
+            $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line) || strpos($line, '#') === 0) {
+                    continue;
+                }
+                if (strpos($line, '=') !== false) {
+                    list($name, $value) = explode('=', $line, 2);
+                    $name = trim($name);
+                    $value = trim($value);
+                    // Remove surrounding quotes
+                    if (preg_match('/^["\'](.*)["\']$/', $value, $matches)) {
+                        $value = $matches[1];
+                    }
+                    if (!isset($_SERVER[$name]) && !isset($_ENV[$name])) {
+                        putenv("{$name}={$value}");
+                        $_ENV[$name] = $value;
+                        $_SERVER[$name] = $value;
+                    }
+                }
+            }
+        }
+    }
+
     private function getEnvVar($key, $default) {
         if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
             return $_ENV[$key];
@@ -23,10 +50,11 @@ class Database {
     }
 
     public function __construct() {
-        $this->host = $this->getEnvVar('DB_HOST', 'localhost');
-        $this->port = $this->getEnvVar('DB_PORT', '3306');
-        $this->db_name = $this->getEnvVar('DB_NAME', 'infravision');
-        $this->username = $this->getEnvVar('DB_USER', 'root');
+        $this->loadEnv();
+        $this->host = $this->getEnvVar('DB_HOST', 'mysql-3c70fa95-infravision.a.aivencloud.com');
+        $this->port = $this->getEnvVar('DB_PORT', '26976');
+        $this->db_name = $this->getEnvVar('DB_NAME', 'defaultdb');
+        $this->username = $this->getEnvVar('DB_USER', 'avnadmin');
         $this->password = $this->getEnvVar('DB_PASS', '');
     }
 

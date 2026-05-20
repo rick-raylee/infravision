@@ -1,0 +1,8 @@
+.env
+scratch/
+agents/windows_agent_csharp/agent_config.json
+.vscode/
+.idea/
+*.rar
+*.zip
+*.log
