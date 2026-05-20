@@ -11,7 +11,7 @@ class TrafficController {
         
         $conexoes = [];
         if ($db) {
-            $query = "SELECT origem, ip_origem as ip, destino, servico, CONCAT(latencia, 'ms') as latency, carga as load FROM conexoes ORDER BY atualizado_em DESC LIMIT 50";
+            $query = "SELECT origem, ip_origem AS ip, destino, servico, CONCAT(latencia, 'ms') AS latency, carga AS `load` FROM conexoes ORDER BY atualizado_em DESC LIMIT 50";
             $stmt = $db->prepare($query);
             $stmt->execute();
             $conexoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
