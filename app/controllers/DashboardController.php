@@ -12,11 +12,21 @@ class DashboardController {
         // Buscar estatísticas reais do banco
         $total_devices = $deviceModel->countByStatus('online') + $deviceModel->countByStatus('alerta') + $deviceModel->countByStatus('offline');
         
+        $conexoes_ativas = 0;
+        $stmtConn = $db->query("SELECT COUNT(*) FROM conexoes");
+        if ($stmtConn) {
+            $conexoes_ativas = (int)$stmtConn->fetchColumn();
+        }
+
+        $stmtAlertas = $db->query("SELECT COUNT(*) FROM alertas WHERE status = 'ativo'");
+        $alertas_ativos = $stmtAlertas ? (int)$stmtAlertas->fetchColumn() : 0;
+
         $estatisticas = [
             'servidores_online' => $deviceModel->countByStatus('online'),
             'servidores_total' => $total_devices,
-            'alertas_ativos' => $deviceModel->countByStatus('alerta') + $deviceModel->countByStatus('offline'),
-            'vms_total' => $total_devices // usar total de servidores reais como contagem de VMs/Servidores
+            'alertas_ativos' => $alertas_ativos,
+            'conexoes_ativas' => $conexoes_ativas,
+            'vms_total' => $total_devices,
         ];
 
         // Buscar todos os dispositivos para a tabela do dashboard

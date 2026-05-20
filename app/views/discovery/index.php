@@ -18,7 +18,7 @@
             <div class="noc-card-body">
                 <div class="mb-3">
                     <label class="form-label text-secondary small">Faixa de IP (CIDR)</label>
-                    <input type="text" class="form-control bg-dark border-secondary text-light" value="192.168.1.0/24">
+                    <input type="text" class="form-control bg-dark border-secondary text-light" id="scanCidr" placeholder="Ex: 192.168.1.0/24" disabled>
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-secondary small">Método de Descoberta</label>
@@ -83,56 +83,64 @@
     const scanBtn = document.getElementById('startScan');
     const resultsBody = document.getElementById('discoveryResults');
     const scanStatus = document.getElementById('scanStatus');
-    
-    const mockDiscovery = [
-        { ip: '192.168.1.1', host: 'GATEWAY-FIREWALL', type: 'Network Device', managed: true },
-        { ip: '192.168.1.10', host: 'SRV-EXCHANGE-01', type: 'Server', managed: true },
-        { ip: '192.168.1.15', host: 'PC-FINANCEIRO-02', type: 'Workstation', managed: false },
-        { ip: '192.168.1.50', host: 'DESCONHECIDO (MAC: 00:0C:29...)', type: 'IoT / Camera', managed: false },
-        { ip: '192.168.1.105', host: 'MACBOOK-CEO', type: 'Mobile/Laptop', managed: false },
-        { ip: '192.168.1.200', host: 'SRV-ARQUIVOS', type: 'Server', managed: true },
-    ];
+    const discoveryDevices = <?= json_encode($dispositivos ?? []) ?>;
+    const basePath = <?= json_encode($base_path ?? '') ?>;
+
+    function renderDiscovery(devices) {
+        resultsBody.innerHTML = '';
+        let blindSpotCount = 0;
+
+        if (!devices.length) {
+            resultsBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-secondary py-4">
+                        Nenhum dispositivo cadastrado. Execute o agente ou cadastre manualmente em Dispositivos.
+                    </td>
+                </tr>
+            `;
+            document.getElementById('totalFound').innerText = '0';
+            document.getElementById('blindSpots').innerText = '0';
+            return;
+        }
+
+        devices.forEach(item => {
+            const managed = item.status === 'online' || item.status === 'alerta';
+            if (!managed) blindSpotCount++;
+
+            const managedBadge = managed
+                ? '<span class="badge bg-success bg-opacity-10 text-success border border-success">Monitorado</span>'
+                : '<span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Sem telemetria</span>';
+
+            const host = item.hostname || item.nome || '—';
+            const row = `
+                <tr>
+                    <td><code class="text-info">${item.ip ?? ''}</code></td>
+                    <td class="text-light">${host}</td>
+                    <td class="small text-secondary">${item.tipo ?? ''}</td>
+                    <td>${managedBadge}</td>
+                    <td>
+                        ${managed
+                            ? '<i class="fa-solid fa-check text-success"></i>'
+                            : `<a href="${basePath}/device/create?ip=${encodeURIComponent(item.ip || '')}&nome=${encodeURIComponent(host)}" class="btn btn-sm btn-primary">Gerenciar</a>`}
+                    </td>
+                </tr>
+            `;
+            resultsBody.innerHTML += row;
+        });
+
+        document.getElementById('totalFound').innerText = devices.length;
+        document.getElementById('blindSpots').innerText = blindSpotCount;
+    }
 
     scanBtn.addEventListener('click', () => {
         scanBtn.disabled = true;
-        scanBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Varrendo Rede...';
-        scanStatus.innerText = 'Varrendo 192.168.1.0/24...';
-        resultsBody.innerHTML = '';
-        
-        let foundCount = 0;
-        let blindSpotCount = 0;
-
-        mockDiscovery.forEach((item, index) => {
-            setTimeout(() => {
-                foundCount++;
-                if (!item.managed) blindSpotCount++;
-                
-                const managedBadge = item.managed 
-                    ? '<span class="badge bg-success bg-opacity-10 text-success border border-success">Gerenciado</span>'
-                    : '<span class="badge bg-warning bg-opacity-10 text-warning border border-warning">PONTO CEGO</span>';
-                
-                const row = `
-                    <tr class="animate__animated animate__fadeIn">
-                        <td><code class="text-info">${item.ip}</code></td>
-                        <td class="text-light">${item.host}</td>
-                        <td class="small text-secondary">${item.type}</td>
-                        <td>${managedBadge}</td>
-                        <td>
-                            ${!item.managed ? `<a href="<?= $base_path ?>/device/create?ip=${item.ip}&nome=${item.host}" class="btn btn-sm btn-primary">Gerenciar</a>` : '<i class="fa-solid fa-check text-success"></i>'}
-                        </td>
-                    </tr>
-                `;
-                resultsBody.innerHTML += row;
-                
-                document.getElementById('totalFound').innerText = foundCount;
-                document.getElementById('blindSpots').innerText = blindSpotCount;
-
-                if (index === mockDiscovery.length - 1) {
-                    scanBtn.disabled = false;
-                    scanBtn.innerHTML = '<i class="fa-solid fa-search me-1"></i> Iniciar Varredura';
-                    scanStatus.innerText = 'Varredura concluída.';
-                }
-            }, index * 800);
-        });
+        scanBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Carregando...';
+        scanStatus.innerText = 'Listando dispositivos cadastrados no banco...';
+        renderDiscovery(discoveryDevices);
+        scanBtn.disabled = false;
+        scanBtn.innerHTML = '<i class="fa-solid fa-search me-1"></i> Atualizar Lista';
+        scanStatus.innerText = discoveryDevices.length
+            ? 'Lista atualizada com dados reais do banco.'
+            : 'Nenhum dispositivo encontrado.';
     });
 </script>

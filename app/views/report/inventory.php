@@ -107,34 +107,29 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td><strong>SRV-DC-01</strong></td>
-                <td>10.0.0.5</td>
-                <td>Windows Server 2022</td>
-                <td><span class="badge bg-success">Online</span></td>
-                <td>15% / 42%</td>
-            </tr>
-            <tr>
-                <td><strong>SRV-DB-01</strong></td>
-                <td>10.0.0.10</td>
-                <td>Ubuntu 22.04 LTS</td>
-                <td><span class="badge bg-success">Online</span></td>
-                <td>65% / 88%</td>
-            </tr>
-            <tr>
-                <td><strong>SRV-APP-01</strong></td>
-                <td>10.0.0.11</td>
-                <td>CentOS 7</td>
-                <td><span class="badge bg-warning text-dark">Alerta</span></td>
-                <td>92% / 75%</td>
-            </tr>
-            <tr>
-                <td><strong>SRV-BACKUP</strong></td>
-                <td>10.0.0.20</td>
-                <td>Windows Server 2019</td>
-                <td><span class="badge bg-secondary">Offline</span></td>
-                <td>0% / 0%</td>
-            </tr>
+            <?php if (empty($dispositivos)): ?>
+                <tr><td colspan="5" class="text-center text-muted">Nenhum dispositivo cadastrado no banco.</td></tr>
+            <?php else: ?>
+                <?php foreach ($dispositivos as $d): ?>
+                    <?php
+                        $badge = match ($d['status'] ?? '') {
+                            'online' => 'bg-success',
+                            'alerta' => 'bg-warning text-dark',
+                            'critico' => 'bg-danger',
+                            default => 'bg-secondary',
+                        };
+                        $cpu = $d['cpu_atual'] !== null ? round($d['cpu_atual']) . '%' : '—';
+                        $ram = $d['ram_atual'] !== null ? round($d['ram_atual']) . '%' : '—';
+                    ?>
+                    <tr>
+                        <td><strong><?= htmlspecialchars($d['hostname']) ?></strong></td>
+                        <td><?= htmlspecialchars($d['ip']) ?></td>
+                        <td><?= htmlspecialchars($d['tipo']) ?></td>
+                        <td><span class="badge <?= $badge ?>"><?= htmlspecialchars(ucfirst($d['status'] ?? 'offline')) ?></span></td>
+                        <td><?= $cpu ?> / <?= $ram ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </tbody>
     </table>
 

@@ -23,8 +23,8 @@
                         <i class="fa-solid fa-network-wired fa-2x text-success"></i>
                     </div>
                     <div>
-                        <div class="stat-label">Rede Core</div>
-                        <div class="stat-value">Normal</div>
+                        <div class="stat-label">Conexões de Rede</div>
+                        <div class="stat-value"><?= (int)($estatisticas['conexoes_ativas'] ?? 0) ?></div>
                     </div>
                 </div>
             </div>
@@ -39,7 +39,7 @@
                     </div>
                     <div>
                         <div class="stat-label">Alertas Críticos</div>
-                        <div class="stat-value text-danger" id="val-alertas"><?= $estatisticas['alertas_ativos'] ?></div>
+                        <div class="stat-value text-danger" id="val-alertas"><?= (int)($estatisticas['alertas_ativos'] ?? 0) ?></div>
                     </div>
                 </div>
             </div>
@@ -54,8 +54,8 @@
                     </div>
                     <div>
                         <div class="stat-label">Ambiente Datacenter</div>
-                        <div class="stat-value"><span id="val-temp">22°C</span> / <span id="val-umidade" class="text-info">45%</span></div>
-                        <div class="text-secondary small"><i class="fa-solid fa-microchip me-1"></i> SNMP Sensor Active</div>
+                        <div class="stat-value"><span id="val-temp">—</span> / <span id="val-umidade" class="text-info">—</span></div>
+                        <div class="text-secondary small"><i class="fa-solid fa-microchip me-1"></i> Sensor ambiental (quando disponível)</div>
                     </div>
                 </div>
             </div>
@@ -70,8 +70,8 @@
                     </div>
                     <div>
                         <div class="stat-label">Virtualização</div>
-                        <div class="stat-value"><?= $estatisticas['vms_total'] ?> VMs</div>
-                        <div class="text-success small">Noisy Neighbor: Low</div>
+                        <div class="stat-value"><?= (int)$estatisticas['vms_total'] ?> dispositivos</div>
+                        <div class="text-secondary small">Cadastrados no monitoramento</div>
                     </div>
                 </div>
             </div>
@@ -194,8 +194,8 @@
 
     // Gráfico de Rede
     var netOptions = {
-        series: [{ name: 'Inbound (Mbps)', data: [30, 40, 35, 50, 49, 60, 70, 91, 125, 100, 110] },
-                 { name: 'Outbound (Mbps)', data: [20, 30, 25, 40, 39, 50, 60, 81, 95, 80, 90] }],
+        series: [{ name: 'Inbound (Mbps)', data: [0,0,0,0,0,0,0,0,0,0,0] },
+                 { name: 'Outbound (Mbps)', data: [0,0,0,0,0,0,0,0,0,0,0] }],
         chart: { type: 'area', height: 300, stacked: false },
         colors: ['#3b82f6', '#10b981'],
         dataLabels: { enabled: false },
@@ -230,24 +230,27 @@
     var cpuChart = new ApexCharts(document.querySelector("#cpuChart"), cpuOptions);
     cpuChart.render();
 
-    // Simular Atualização em Tempo Real via AJAX
-    setInterval(() => {
+    function atualizarDashboard() {
         fetch('<?= $base_path ?>/api/dados_dashboard')
             .then(response => response.json())
             .then(data => {
-                // Atualizar Cards
-                document.getElementById('val-temp').innerText = data.temperatura + '°C';
-                if(data.umidade) {
+                if (data.erro) return;
+                if (data.temperatura != null) {
+                    document.getElementById('val-temp').innerText = data.temperatura + '°C';
+                }
+                if (data.umidade != null) {
                     document.getElementById('val-umidade').innerText = data.umidade + '%';
                 }
-                
-                // Atualizar Gráfico de Rede
-                netChart.updateSeries([
-                    { name: 'Inbound (Mbps)', data: data.rede.in },
-                    { name: 'Outbound (Mbps)', data: data.rede.out }
-                ]);
+                if (data.rede && data.rede.in && data.rede.out) {
+                    netChart.updateSeries([
+                        { name: 'Inbound (Mbps)', data: data.rede.in },
+                        { name: 'Outbound (Mbps)', data: data.rede.out }
+                    ]);
+                }
             })
             .catch(error => console.error('Erro ao buscar dados:', error));
-    }, 5000);
+    }
+    atualizarDashboard();
+    setInterval(atualizarDashboard, 5000);
 </script>
 <?php $extra_js = ob_get_clean(); ?>

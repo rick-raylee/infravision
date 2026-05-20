@@ -37,6 +37,8 @@ class AlertController {
     }
 
     public function generateTest() {
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
+
         require_once 'app/models/Alert.php';
         $database = new Database();
         $db = $database->getConnection();
@@ -48,12 +50,10 @@ class AlertController {
         $device = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$device) {
-            // Se não houver dispositivos, cadastrar um dummy
-            $db->exec("INSERT INTO dispositivos (nome, ip, tipo, status) VALUES ('SERVIDOR-TESTE', '127.0.0.1', 'servidor_windows', 'online')");
-            $device_id = $db->lastInsertId();
-        } else {
-            $device_id = $device['id'];
+            header("Location: " . $base_path . "/alerts?erro=sem_dispositivos");
+            exit;
         }
+        $device_id = $device['id'];
 
         $msg = "ALERTA DE TESTE: Saturação de CPU detectada às " . date('H:i:s');
         $query = "INSERT INTO alertas (dispositivo_id, mensagem, severidade, status) VALUES (:dev, :msg, 'critico', 'ativo')";
@@ -62,7 +62,7 @@ class AlertController {
         $stmt->bindParam(':msg', $msg);
         $stmt->execute();
 
-        header("Location: " . BASE_PATH . "/alerts");
+        header("Location: " . $base_path . "/alerts");
         exit;
     }
 }

@@ -10,11 +10,44 @@ class TrafficController {
         $db = $database->getConnection();
         
         $conexoes = [];
+        $stats = [
+            'total' => 0,
+            'top_service' => null,
+            'top_service_detail' => null,
+            'top_consumer' => null,
+            'top_consumer_ip' => null,
+        ];
+
         if ($db) {
-            $query = "SELECT origem AS origin, ip_origem AS ip, destino, servico AS service, CONCAT(latencia, 'ms') AS latency, carga AS `load` FROM conexoes ORDER BY atualizado_em DESC LIMIT 50";
+            $query = "SELECT origem AS origin, ip_origem AS ip, destino, servico AS service, CONCAT(latencia, 'ms') AS latency, carga AS `load`
+                      FROM conexoes ORDER BY id DESC LIMIT 50";
             $stmt = $db->prepare($query);
             $stmt->execute();
             $conexoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $stats['total'] = count($conexoes);
+
+            if ($stats['total'] > 0) {
+                $serviceCounts = [];
+                $topLoad = -1;
+                foreach ($conexoes as $row) {
+                    $service = trim((string)($row['service'] ?? ''));
+                    if ($service !== '') {
+                        $serviceCounts[$service] = ($serviceCounts[$service] ?? 0) + 1;
+                    }
+                    $load = (float)($row['load'] ?? 0);
+                    if ($load >= $topLoad) {
+                        $topLoad = $load;
+                        $stats['top_consumer'] = $row['origin'] ?? $row['origem'] ?? null;
+                        $stats['top_consumer_ip'] = $row['ip'] ?? null;
+                    }
+                }
+                if (!empty($serviceCounts)) {
+                    arsort($serviceCounts);
+                    $stats['top_service'] = array_key_first($serviceCounts);
+                    $stats['top_service_detail'] = $stats['top_service'];
+                }
+            }
         }
         
         require 'app/views/layout/header.php';

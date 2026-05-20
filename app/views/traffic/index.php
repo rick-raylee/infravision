@@ -14,8 +14,8 @@
         <div class="noc-card">
             <div class="noc-card-body">
                 <div class="stat-label">Conexões Atuais</div>
-                <div class="stat-value">42</div>
-                <div class="text-success small"><i class="fa-solid fa-caret-up"></i> 5 novas no último minuto</div>
+                <div class="stat-value"><?= (int)($stats['total'] ?? 0) ?></div>
+                <div class="text-secondary small">Dados enviados pelo agente</div>
             </div>
         </div>
     </div>
@@ -23,8 +23,8 @@
         <div class="noc-card">
             <div class="noc-card-body">
                 <div class="stat-label">Serviço mais Acessado</div>
-                <div class="stat-value" style="font-size: 1.5rem;">SMB / Arquivos</div>
-                <div class="text-secondary small">Porta 445 (Microsoft-DS)</div>
+                <div class="stat-value" style="font-size: 1.5rem;"><?= $stats['top_service'] ? htmlspecialchars($stats['top_service']) : '—' ?></div>
+                <div class="text-secondary small"><?= $stats['top_service'] ? 'Com base nas conexões ativas' : 'Sem conexões registradas' ?></div>
             </div>
         </div>
     </div>
@@ -32,8 +32,8 @@
         <div class="noc-card">
             <div class="noc-card-body">
                 <div class="stat-label">Top Consumidor</div>
-                <div class="stat-value" style="font-size: 1.5rem;">PC-FINANCEIRO-02</div>
-                <div class="text-primary small">IP: 192.168.1.15</div>
+                <div class="stat-value" style="font-size: 1.5rem;"><?= $stats['top_consumer'] ? htmlspecialchars($stats['top_consumer']) : '—' ?></div>
+                <div class="text-primary small"><?= $stats['top_consumer_ip'] ? 'IP: ' . htmlspecialchars($stats['top_consumer_ip']) : 'Aguardando agente' ?></div>
             </div>
         </div>
     </div>

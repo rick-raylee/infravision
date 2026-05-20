@@ -2,148 +2,141 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
             <h1><i class="fa-solid fa-shield-halved me-2 text-primary"></i> Rede & Firewall</h1>
-            <button class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Novo Dispositivo</button>
+            <a href="<?= $base_path ?>/device/create" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Novo Dispositivo</a>
         </div>
-        <p class="text-secondary">Monitoramento em tempo real de switches, roteadores e regras de tráfego.</p>
+        <p class="text-secondary">Conexões e dispositivos de rede monitorados via agente e banco de dados.</p>
     </div>
 </div>
 
 <div class="row g-4">
-    <!-- Status das Interfaces -->
     <div class="col-12 col-lg-8">
         <div class="noc-card">
             <div class="noc-card-header">
-                <span><i class="fa-solid fa-ethernet me-2"></i> Interfaces Core-Switch-01</span>
-                <span class="badge bg-success">Operacional</span>
+                <span><i class="fa-solid fa-arrows-left-right me-2"></i> Conexões ativas (agente)</span>
+                <span class="badge bg-<?= !empty($conexoes) ? 'success' : 'secondary' ?>"><?= !empty($conexoes) ? 'Com dados' : 'Sem dados' ?></span>
             </div>
             <div class="noc-card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Porta</th>
-                                <th>Status</th>
-                                <th>VLAN</th>
-                                <th>Tráfego (In)</th>
-                                <th>Tráfego (Out)</th>
-                                <th>Erros</th>
+                                <th>Origem</th>
+                                <th>IP</th>
+                                <th>Destino</th>
+                                <th>Serviço</th>
+                                <th>Latência</th>
+                                <th>Carga</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>GigabitEthernet1/1</td>
-                                <td><span class="status-indicator status-online"></span> Up</td>
-                                <td>10 (Data)</td>
-                                <td>45.2 Mbps</td>
-                                <td>12.8 Mbps</td>
-                                <td>0</td>
-                            </tr>
-                            <tr>
-                                <td>GigabitEthernet1/2</td>
-                                <td><span class="status-indicator status-online"></span> Up</td>
-                                <td>20 (VoIP)</td>
-                                <td>2.1 Mbps</td>
-                                <td>1.5 Mbps</td>
-                                <td>0</td>
-                            </tr>
-                            <tr>
-                                <td>GigabitEthernet1/3</td>
-                                <td><span class="status-indicator status-offline"></span> Down</td>
-                                <td>10 (Data)</td>
-                                <td>0 bps</td>
-                                <td>0 bps</td>
-                                <td>0</td>
-                            </tr>
-                            <tr>
-                                <td>TenGigabitEthernet1/1</td>
-                                <td><span class="status-indicator status-online"></span> Up</td>
-                                <td>Trunk</td>
-                                <td>850 Mbps</td>
-                                <td>420 Mbps</td>
-                                <td>0</td>
-                            </tr>
+                            <?php if (empty($conexoes)): ?>
+                                <tr>
+                                    <td colspan="6" class="text-center text-secondary py-4">
+                                        Nenhuma conexão registrada. O agente envia conexões em cada coleta.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($conexoes as $c): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($c['origem']) ?></td>
+                                        <td><code class="text-info"><?= htmlspecialchars($c['ip_origem']) ?></code></td>
+                                        <td><?= htmlspecialchars($c['destino']) ?></td>
+                                        <td><?= htmlspecialchars($c['servico']) ?></td>
+                                        <td><?= (int)$c['latencia'] ?> ms</td>
+                                        <td><?= (int)$c['carga'] ?>%</td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <?php if (!empty($dispositivos_rede)): ?>
+        <div class="noc-card mt-4">
+            <div class="noc-card-header">
+                <span><i class="fa-solid fa-ethernet me-2"></i> Equipamentos de rede cadastrados</span>
+            </div>
+            <div class="noc-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>IP</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Última checagem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($dispositivos_rede as $d): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($d['nome']) ?></td>
+                                    <td><?= htmlspecialchars($d['ip']) ?></td>
+                                    <td><?= htmlspecialchars($d['tipo']) ?></td>
+                                    <td><span class="status-indicator status-<?= $d['status'] === 'online' ? 'online' : 'offline' ?>"></span> <?= htmlspecialchars($d['status']) ?></td>
+                                    <td><?= $d['ultimo_check'] ? date('d/m/Y H:i', strtotime($d['ultimo_check'])) : 'Nunca' ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
-    <!-- Firewall Deep Dive -->
     <div class="col-12 col-lg-4">
         <div class="noc-card mb-4">
             <div class="noc-card-header">
-                <span><i class="fa-solid fa-lock me-2 text-danger"></i> Firewall State</span>
-                <span class="badge bg-danger pulse-danger">Ameaça Detectada</span>
+                <span><i class="fa-solid fa-chart-pie me-2"></i> Serviços nas conexões</span>
             </div>
             <div class="noc-card-body">
-                <div class="row text-center mb-4">
-                    <div class="col-6">
-                        <div class="text-secondary small">Throughput</div>
-                        <div class="h4 mb-0">850 Mbps</div>
-                    </div>
-                    <div class="col-6 border-start border-secondary">
-                        <div class="text-secondary small">Sessões Ativas</div>
-                        <div class="h4 mb-0">12.4k</div>
-                    </div>
-                </div>
-                
-                <div id="protocolChart" style="height: 200px;"></div>
+                <?php if (empty($servico_stats)): ?>
+                    <p class="text-secondary mb-0">Sem dados para gráfico. Aguardando agente.</p>
+                <?php else: ?>
+                    <div id="protocolChart" style="height: 200px;"></div>
+                <?php endif; ?>
+            </div>
+        </div>
 
-                <hr class="border-secondary my-4">
-                
-                <h6 class="mb-3">Ameaças Recentes (IPS)</h6>
-                <div class="list-group list-group-flush bg-transparent">
-                    <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="small fw-bold">SQL Injection Attempt</div>
-                            <div class="text-secondary" style="font-size: 0.75rem;">IP: 185.220.101.45 (RU)</div>
-                        </div>
-                        <span class="badge bg-danger">Bloqueado</span>
+        <div class="noc-card">
+            <div class="noc-card-header">
+                <span><i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i> Alertas ativos</span>
+            </div>
+            <div class="noc-card-body">
+                <?php if (empty($alertas_ips)): ?>
+                    <p class="text-secondary mb-0">Nenhum alerta ativo no momento.</p>
+                <?php else: ?>
+                    <div class="list-group list-group-flush bg-transparent">
+                        <?php foreach ($alertas_ips as $a): ?>
+                            <div class="list-group-item bg-transparent border-0 px-0 py-2">
+                                <div class="small fw-bold"><?= htmlspecialchars($a['mensagem']) ?></div>
+                                <div class="text-secondary" style="font-size: 0.75rem;">
+                                    <?= htmlspecialchars($a['nome']) ?> — IP: <?= htmlspecialchars($a['ip']) ?>
+                                </div>
+                                <span class="badge bg-<?= $a['severidade'] === 'critico' ? 'danger' : 'warning' ?> mt-1"><?= htmlspecialchars($a['severidade']) ?></span>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                    <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="small fw-bold">SSH Brute Force</div>
-                            <div class="text-secondary" style="font-size: 0.75rem;">IP: 45.142.120.12 (CN)</div>
-                        </div>
-                        <span class="badge bg-danger">Bloqueado</span>
-                    </div>
-                    <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="small fw-bold">Port Scan Detectado</div>
-                            <div class="text-secondary" style="font-size: 0.75rem;">IP: 192.168.1.50 (Local)</div>
-                        </div>
-                        <span class="badge bg-warning text-dark">Alerta</span>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.pulse-danger {
-    animation: pulse-red 2s infinite;
-}
-@keyframes pulse-red {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-</style>
-
+<?php if (!empty($servico_stats)): ?>
 <?php ob_start(); ?>
 <script>
-    // Gráfico de Protocolos do Firewall
+    const protocolLabels = <?= json_encode(array_column($servico_stats, 'servico')) ?>;
+    const protocolSeries = <?= json_encode(array_map('intval', array_column($servico_stats, 'total'))) ?>;
     var protocolOptions = {
-        series: [44, 35, 13, 8],
-        chart: {
-            type: 'donut',
-            height: 200,
-            foreColor: '#a0aec0'
-        },
-        labels: ['HTTPS', 'HTTP', 'UDP', 'DNS'],
-        colors: ['#3b82f6', '#10b981', '#f59e0b', '#6366f1'],
+        series: protocolSeries,
+        chart: { type: 'donut', height: 200, foreColor: '#a0aec0' },
+        labels: protocolLabels,
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#14b8a6'],
         stroke: { show: false },
         legend: { position: 'bottom' },
         dataLabels: { enabled: false },
@@ -151,17 +144,12 @@
             pie: {
                 donut: {
                     size: '70%',
-                    labels: {
-                        show: true,
-                        name: { show: true },
-                        value: { show: true, color: '#fff' },
-                        total: { show: true, label: 'Tráfego', color: '#a0aec0' }
-                    }
+                    labels: { show: true, total: { show: true, label: 'Conexões', color: '#a0aec0' } }
                 }
             }
         }
     };
-    var protocolChart = new ApexCharts(document.querySelector("#protocolChart"), protocolOptions);
-    protocolChart.render();
+    new ApexCharts(document.querySelector("#protocolChart"), protocolOptions).render();
 </script>
 <?php $extra_js = ob_get_clean(); ?>
+<?php endif; ?>

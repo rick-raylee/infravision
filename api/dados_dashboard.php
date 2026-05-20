@@ -19,7 +19,7 @@ $queryTemp = "SELECT l.valor FROM leituras l
 $stmtTemp = $db->prepare($queryTemp);
 $stmtTemp->execute();
 $tempRow = $stmtTemp->fetch(PDO::FETCH_ASSOC);
-$temp = $tempRow ? round($tempRow['valor']) : 22; // fallback to 22 if no real sensor
+$temp = $tempRow ? round($tempRow['valor']) : null;
 
 $queryUmid = "SELECT l.valor FROM leituras l 
               JOIN sensores s ON l.sensor_id = s.id 
@@ -28,7 +28,7 @@ $queryUmid = "SELECT l.valor FROM leituras l
 $stmtUmid = $db->prepare($queryUmid);
 $stmtUmid->execute();
 $umidRow = $stmtUmid->fetch(PDO::FETCH_ASSOC);
-$umid = $umidRow ? round($umidRow['valor']) : 45; // fallback to 45 if no real sensor
+$umid = $umidRow ? round($umidRow['valor']) : null;
 
 // 2. Buscar tráfego de rede (rede_in e rede_out) dos últimos 11 checks
 $queryNetIn = "SELECT l.valor FROM leituras l 

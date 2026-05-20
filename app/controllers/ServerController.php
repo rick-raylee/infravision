@@ -8,7 +8,6 @@ class ServerController {
         $db = $database->getConnection();
         $deviceModel = new Device($db);
 
-        // Buscar apenas servidores cadastrados no banco com métricas reais
         $query = "SELECT d.id, d.nome as hostname, d.ip, d.tipo, d.status, d.ultimo_check,
                          (SELECT l.valor FROM leituras l 
                           JOIN sensores s ON l.sensor_id = s.id 
@@ -25,14 +24,13 @@ class ServerController {
         $stmt->execute();
         $servidores_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Mapear para o formato esperado pela view
         $servidores = [];
         foreach ($servidores_db as $s) {
             $servidores[] = [
                 'id' => $s['id'],
                 'nome' => $s['hostname'],
                 'ip' => $s['ip'],
-                'so' => htmlspecialchars($s['tipo']) === 'servidor_linux' ? 'Linux Server' : 'Windows Server',
+                'so' => $s['tipo'] === 'servidor_linux' ? 'Linux Server' : 'Windows Server',
                 'status' => $s['status'],
                 'cpu' => $s['cpu_atual'] !== null ? round($s['cpu_atual']) : 0,
                 'ram' => $s['ram_atual'] !== null ? round($s['ram_atual']) : 0
@@ -48,9 +46,52 @@ class ServerController {
     }
 
     public function details() {
-        $server_name = $_GET['nome'] ?? 'Servidor Desconhecido';
+        $server_name = $_GET['nome'] ?? '';
         $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
         $current_path = '/servers';
+
+        $servidor = null;
+        $historico_cpu = [];
+        $historico_ram = [];
+        $discos = [];
+
+        if ($server_name !== '') {
+            $database = new Database();
+            $db = $database->getConnection();
+            if ($db) {
+                $stmt = $db->prepare("SELECT * FROM dispositivos WHERE nome = :nome LIMIT 1");
+                $stmt->execute([':nome' => $server_name]);
+                $servidor = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($servidor) {
+                    $histQuery = "SELECT l.valor, l.data_leitura, s.tipo
+                                  FROM leituras l
+                                  JOIN sensores s ON s.id = l.sensor_id
+                                  WHERE s.dispositivo_id = :id AND s.tipo IN ('cpu', 'ram')
+                                  ORDER BY l.data_leitura DESC LIMIT 48";
+                    $stmtHist = $db->prepare($histQuery);
+                    $stmtHist->execute([':id' => $servidor['id']]);
+                    $leituras = array_reverse($stmtHist->fetchAll(PDO::FETCH_ASSOC));
+                    foreach ($leituras as $l) {
+                        if ($l['tipo'] === 'cpu') {
+                            $historico_cpu[] = round((float)$l['valor'], 1);
+                        } elseif ($l['tipo'] === 'ram') {
+                            $historico_ram[] = round((float)$l['valor'], 1);
+                        }
+                    }
+
+                    $stmtDisco = $db->prepare("SELECT s.nome, l.valor
+                                               FROM leituras l
+                                               JOIN sensores s ON s.id = l.sensor_id
+                                               WHERE s.dispositivo_id = :id AND s.tipo = 'disco'
+                                                 AND l.data_leitura = (
+                                                     SELECT MAX(l2.data_leitura) FROM leituras l2 WHERE l2.sensor_id = s.id
+                                                 )");
+                    $stmtDisco->execute([':id' => $servidor['id']]);
+                    $discos = $stmtDisco->fetchAll(PDO::FETCH_ASSOC);
+                }
+            }
+        }
         
         require 'app/views/layout/header.php';
         require 'app/views/server/details.php';
