@@ -17,12 +17,14 @@ namespace InfraVisionAgent
         public string ApiUrl { get; set; }
         public string AuthToken { get; set; }
         public int Intervalo { get; set; }
+        public bool MonitorNobreak { get; set; }
 
         public AgentConfig()
         {
             ApiUrl = string.Empty;
             AuthToken = "QUALQUER_TOKEN";
             Intervalo = 60;
+            MonitorNobreak = false;
         }
     }
 
@@ -215,7 +217,7 @@ namespace InfraVisionAgent
             {
                 try
                 {
-                    Dictionary<string, object> payload = CollectMetrics();
+                    Dictionary<string, object> payload = CollectMetrics(agentConfig);
                     string jsonPayload = SimpleJson.Serialize(payload);
 
                     using (WebClient client = new WebClient())
@@ -248,10 +250,11 @@ namespace InfraVisionAgent
         {
             try
             {
-                string json = string.Format("{{\n  \"ApiUrl\": \"{0}\",\n  \"AuthToken\": \"{1}\",\n  \"Intervalo\": {2}\n}}", 
+                string json = string.Format("{{\n  \"ApiUrl\": \"{0}\",\n  \"AuthToken\": \"{1}\",\n  \"Intervalo\": {2},\n  \"MonitorNobreak\": {3}\n}}", 
                     config.ApiUrl.Replace("\\", "\\\\").Replace("\"", "\\\""), 
                     config.AuthToken.Replace("\\", "\\\\").Replace("\"", "\\\""), 
-                    config.Intervalo);
+                    config.Intervalo,
+                    config.MonitorNobreak ? "true" : "false");
                 File.WriteAllText(path, json, Encoding.UTF8);
             }
             catch (Exception ex)
@@ -271,6 +274,7 @@ namespace InfraVisionAgent
                 string url = ExtractJsonValue(content, "ApiUrl");
                 string token = ExtractJsonValue(content, "AuthToken");
                 string intervalStr = ExtractJsonValue(content, "Intervalo");
+                string monitorNbStr = ExtractJsonValue(content, "MonitorNobreak");
 
                 if (!string.IsNullOrEmpty(url)) config.ApiUrl = url;
                 if (!string.IsNullOrEmpty(token)) config.AuthToken = token;
@@ -281,6 +285,10 @@ namespace InfraVisionAgent
                     {
                         config.Intervalo = interval;
                     }
+                }
+                if (!string.IsNullOrEmpty(monitorNbStr))
+                {
+                    config.MonitorNobreak = monitorNbStr.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
                 }
 
                 return config;
@@ -369,6 +377,7 @@ namespace InfraVisionAgent
             config.ApiUrl = inputUrl;
             config.AuthToken = inputToken;
             config.Intervalo = 60;
+            config.MonitorNobreak = false;
 
             SaveConfig(path, config);
             Console.ForegroundColor = ConsoleColor.Green;
@@ -510,7 +519,7 @@ namespace InfraVisionAgent
             }
         }
 
-        private static Dictionary<string, object> CollectMetrics()
+        private static Dictionary<string, object> CollectMetrics(AgentConfig config)
         {
             Dictionary<string, object> metrics = new Dictionary<string, object>();
 
@@ -558,11 +567,15 @@ namespace InfraVisionAgent
             // 9. Timestamp
             metrics["timestamp"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-            // 10. UPS / Battery if available
-            Dictionary<string, object> batteryInfo = GetBatteryInfo(ipAddress, hostname);
-            if (batteryInfo != null)
+            // 10. Nobreak/UPS apenas se habilitado (bateria de notebook NAO e nobreak)
+            metrics["monitor_nobreak"] = config.MonitorNobreak;
+            if (config.MonitorNobreak)
             {
-                metrics["nobreak"] = batteryInfo;
+                Dictionary<string, object> batteryInfo = GetBatteryInfo(ipAddress, hostname);
+                if (batteryInfo != null)
+                {
+                    metrics["nobreak"] = batteryInfo;
+                }
             }
 
             return metrics;

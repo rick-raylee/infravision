@@ -14,7 +14,7 @@
             <div class="noc-card p-5 text-center text-secondary">
                 <i class="fa-solid fa-battery-empty fa-3x mb-3 text-muted"></i>
                 <h4>Nenhum Nobreak Cadastrado</h4>
-                <p class="mb-0">Para monitorar um nobreak, adicione um dispositivo com o tipo <strong>nobreak</strong> e envie dados de bateria via API ou SNMP.</p>
+                <p class="mb-0">Cadastre um nobreak em <strong>Dispositivos</strong> (tipo <strong>nobreak</strong>) com o IP do UPS e ative <code>MonitorNobreak: true</code> no <code>agent_config.json</code> da máquina ligada ao UPS. Servidores e notebooks sem UPS não devem enviar dados de bateria.</p>
             </div>
         </div>
     <?php else: ?>

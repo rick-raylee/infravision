@@ -79,6 +79,7 @@ if ($ServerUrl) {
         ApiUrl = $CleanUrl
         AuthToken = $CleanToken
         Intervalo = 60
+        MonitorNobreak = $false
     }
     $Config | ConvertTo-Json | Out-File $ConfigPath -Encoding UTF8 -Force
     Write-Host "Configuração salva com sucesso por parâmetro em: $ConfigPath" -ForegroundColor Green
@@ -113,6 +114,7 @@ if (-not (Test-Path $ConfigPath)) {
         ApiUrl = $InputUrl
         AuthToken = $InputToken
         Intervalo = 60
+        MonitorNobreak = $false
     }
     $Config | ConvertTo-Json | Out-File $ConfigPath -Encoding UTF8 -Force
     Write-Host ""
@@ -128,6 +130,10 @@ $ConfigContent = Get-Content $ConfigPath -Raw | ConvertFrom-Json
 $ApiUrl = $ConfigContent.ApiUrl
 $AuthToken = $ConfigContent.AuthToken
 $IntervaloSegundos = if ($ConfigContent.Intervalo) { $ConfigContent.Intervalo } else { 60 }
+$MonitorNobreak = $false
+if ($ConfigContent.PSObject.Properties.Name -contains 'MonitorNobreak') {
+    $MonitorNobreak = [bool]$ConfigContent.MonitorNobreak
+}
 
 Write-Host "InfraVision Agent iniciado com sucesso!" -ForegroundColor Green
 Write-Host "URL de Destino: $ApiUrl" -ForegroundColor Cyan
@@ -316,7 +322,8 @@ while ($true) {
             timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         }
 
-        if ($null -ne $BatteryPercent) {
+        $PayloadHash["monitor_nobreak"] = $MonitorNobreak
+        if ($MonitorNobreak -and $null -ne $BatteryPercent) {
             $NbNome = if ($BatteryName -and $BatteryName -notmatch '^\d+$') { $BatteryName } else { "Nobreak USB - $Hostname" }
             $NbAutonomia = $null
             if ($null -ne $BatteryRuntime -and $BatteryRuntime -gt 0 -and $BatteryRuntime -lt 65535 -and $BatteryRuntime -lt 71582700 -and $BatteryRuntime -le 10080) {

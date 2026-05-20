@@ -173,8 +173,9 @@ try {
         }
     }
 
-    // 5. Salvar telemetria do nobreak associado (Auto-cobertura se houver bateria/UPS)
-    if ($nobreak) {
+    // 5. Nobreak: somente se o agente estiver com monitor_nobreak=true E o dispositivo ja existir no painel
+    $monitor_nobreak = !empty($dados['monitor_nobreak']);
+    if ($nobreak && $monitor_nobreak) {
         $nb_nome = normalizarNomeNobreak($nobreak['nome'] ?? null, $hostname);
         $nb_ip = $nobreak['ip'] ?? $ip;
         $nb_bateria = isset($nobreak['bateria']) ? min(100, max(0, (float)$nobreak['bateria'])) : null;
@@ -183,20 +184,23 @@ try {
         $nb_carga = isset($nobreak['carga']) ? min(100, max(0, (float)$nobreak['carga'])) : null;
         $nb_status = $nobreak['status'] ?? 'online';
 
-        // Verificar se já existe o nobreak cadastrado
-        $stmtNB = $db->prepare("SELECT id FROM dispositivos WHERE tipo = 'nobreak' AND nome = ? LIMIT 1");
-        $stmtNB->execute([$nb_nome]);
+        $stmtNB = $db->prepare("SELECT id FROM dispositivos WHERE tipo = 'nobreak' AND ip = ? LIMIT 1");
+        $stmtNB->execute([$nb_ip]);
         $nb_dispositivo = $stmtNB->fetch();
 
         if ($nb_dispositivo) {
             $nb_id = $nb_dispositivo['id'];
-            $stmtUpdateNB = $db->prepare("UPDATE dispositivos SET status = ?, ultimo_check = NOW() WHERE id = ?");
-            $stmtUpdateNB->execute([$nb_status, $nb_id]);
+            $stmtUpdateNB = $db->prepare("UPDATE dispositivos SET nome = ?, status = ?, ultimo_check = NOW() WHERE id = ?");
+            $stmtUpdateNB->execute([$nb_nome, $nb_status, $nb_id]);
         } else {
-            $stmtInsertNB = $db->prepare("INSERT INTO dispositivos (nome, ip, tipo, status, ultimo_check) VALUES (?, ?, 'nobreak', ?, NOW())");
-            $stmtInsertNB->execute([$nb_nome, $nb_ip, $nb_status]);
-            $nb_id = $db->lastInsertId();
+            // Nao cria nobreak automaticamente (evita bateria de notebook/servidor sem UPS)
+            $nobreak = null;
         }
+    } else {
+        $nobreak = null;
+    }
+
+    if ($nobreak && isset($nb_id)) {
 
         // Salvar leituras para o Nobreak
         $nb_sensores = [];
