@@ -222,16 +222,13 @@ while ($true) {
                 elseif ($Port -eq 22) { $Service = "SSH (22)" }
                 elseif ($Port -eq 3389) { $Service = "RDP (3389)" }
                 
-                $Latency = Get-Random -Minimum 1 -Maximum 15
-                $Load = Get-Random -Minimum 5 -Maximum 75
-
                 $ConexoesArray += @{
                     origem = $Hostname
                     ip_origem = $IpAddress
                     destino = $conn.RemoteAddress
                     servico = $Service
-                    latencia = $Latency
-                    carga = $Load
+                    latencia = 0
+                    carga = 0
                 }
             }
         } catch {}
@@ -320,15 +317,19 @@ while ($true) {
         }
 
         if ($null -ne $BatteryPercent) {
-            $PayloadHash["nobreak"] = @{
-                nome = if ($BatteryName) { $BatteryName } else { "Nobreak USB - " + $Hostname }
+            $NbNome = if ($BatteryName -and $BatteryName -notmatch '^\d+$') { $BatteryName } else { "Nobreak USB - $Hostname" }
+            $NbAutonomia = $null
+            if ($null -ne $BatteryRuntime -and $BatteryRuntime -gt 0 -and $BatteryRuntime -lt 65535 -and $BatteryRuntime -lt 71582700 -and $BatteryRuntime -le 10080) {
+                $NbAutonomia = $BatteryRuntime
+            }
+            $NbPayload = @{
+                nome = $NbNome
                 ip = $IpAddress
-                bateria = $BatteryPercent
-                autonomia = $BatteryRuntime
-                tensao = 220
-                carga = 15
+                bateria = [math]::Min(100, [math]::Max(0, [int]$BatteryPercent))
                 status = if ($BatteryStatus -eq 1 -or $BatteryStatus -eq 8 -or $BatteryStatus -eq 9) { "alerta" } else { "online" }
             }
+            if ($null -ne $NbAutonomia) { $NbPayload["autonomia"] = $NbAutonomia }
+            $PayloadHash["nobreak"] = $NbPayload
         }
 
         $Payload = $PayloadHash | ConvertTo-Json -Depth 5

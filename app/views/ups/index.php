@@ -19,15 +19,24 @@
         </div>
     <?php else: ?>
         <?php foreach ($nobreaks as $nb): 
-            $bateria = $nb['bateria'] !== null ? round($nb['bateria']) : 0;
-            $tensao = $nb['tensao'] !== null ? round($nb['tensao']) : 0;
-            $carga = $nb['carga'] !== null ? round($nb['carga']) : 0;
-            $autonomia = $nb['autonomia'] !== null ? round($nb['autonomia']) : 0;
+            $bateria = $nb['bateria'];
+            $tensao = $nb['tensao'];
+            $carga = $nb['carga'];
+            $autonomia = $nb['autonomia'];
+            $autonomiaLabel = '—';
+            if ($autonomia !== null) {
+                $autonomiaLabel = $autonomia >= 60
+                    ? (int)floor($autonomia / 60) . 'h ' . ($autonomia % 60) . 'min'
+                    : $autonomia . ' min';
+            }
 
             // Cores do status da bateria
             $batteryColor = 'bg-success';
             $batteryIcon = 'fa-battery-full';
-            if ($bateria < 25) {
+            if ($bateria === null) {
+                $batteryColor = 'bg-secondary';
+                $batteryIcon = 'fa-battery-empty';
+            } elseif ($bateria < 25) {
                 $batteryColor = 'bg-danger';
                 $batteryIcon = 'fa-battery-empty';
             } elseif ($bateria < 50) {
@@ -40,7 +49,9 @@
 
             // Cores do status da carga
             $loadColor = 'bg-success';
-            if ($carga > 80) {
+            if ($carga === null) {
+                $loadColor = 'bg-secondary';
+            } elseif ($carga > 80) {
                 $loadColor = 'bg-danger';
             } elseif ($carga > 50) {
                 $loadColor = 'bg-warning';
@@ -62,10 +73,10 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="text-secondary small fw-medium"><i class="fa-solid <?= $batteryIcon ?> me-2 text-success"></i>Bateria</span>
-                                <span class="fw-bold"><?= $bateria ?>%</span>
+                                <span class="fw-bold"><?= $bateria !== null ? $bateria . '%' : '—' ?></span>
                             </div>
                             <div class="progress" style="height: 10px; background-color: #1e2638;">
-                                <div class="progress-bar <?= $batteryColor ?>" role="progressbar" style="width: <?= $bateria ?>%"></div>
+                                <div class="progress-bar <?= $batteryColor ?>" role="progressbar" style="width: <?= $bateria ?? 0 ?>%"></div>
                             </div>
                         </div>
 
@@ -73,10 +84,10 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="text-secondary small fw-medium"><i class="fa-solid fa-bolt-lightning me-2 text-warning"></i>Carga Consumida</span>
-                                <span class="fw-bold"><?= $carga ?>%</span>
+                                <span class="fw-bold"><?= $carga !== null ? $carga . '%' : '—' ?></span>
                             </div>
                             <div class="progress" style="height: 10px; background-color: #1e2638;">
-                                <div class="progress-bar <?= $loadColor ?>" role="progressbar" style="width: <?= $carga ?>%"></div>
+                                <div class="progress-bar <?= $loadColor ?>" role="progressbar" style="width: <?= $carga ?? 0 ?>%"></div>
                             </div>
                         </div>
 
@@ -85,13 +96,16 @@
                             <div class="col-6">
                                 <div class="p-3 rounded" style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
                                     <div class="text-secondary small mb-1">Tensão Entrada</div>
-                                    <h4 class="mb-0 fw-bold text-info"><?= $tensao ?>V</h4>
+                                    <h4 class="mb-0 fw-bold text-info"><?= $tensao !== null ? $tensao . 'V' : '—' ?></h4>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="p-3 rounded" style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
                                     <div class="text-secondary small mb-1">Autonomia Est.</div>
-                                    <h4 class="mb-0 fw-bold text-warning"><?= $autonomia ?> min</h4>
+                                    <h4 class="mb-0 fw-bold text-warning" style="font-size: 1.1rem;"><?= htmlspecialchars($autonomiaLabel) ?></h4>
+                                    <?php if ($autonomia === null): ?>
+                                        <div class="text-secondary" style="font-size: 0.7rem;">Tomada AC / WMI sem estimativa</div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

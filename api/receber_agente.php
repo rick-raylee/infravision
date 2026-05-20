@@ -45,6 +45,28 @@ $numero_serie = $dados['numero_serie'] ?? null;
 $sistema_operacional = $dados['sistema_operacional'] ?? null;
 $processador = $dados['processador'] ?? null;
 
+/**
+ * Win32_Battery.EstimatedRunTime retorna códigos especiais quando desconhecido (ex.: 65535 ou ~71582788 na tomada).
+ */
+function normalizarAutonomiaNobreak($valor): ?float {
+    if ($valor === null || $valor === '') {
+        return null;
+    }
+    $minutos = (float)$valor;
+    if ($minutos <= 0 || $minutos >= 65535 || $minutos >= 71582700 || $minutos > 10080) {
+        return null;
+    }
+    return $minutos;
+}
+
+function normalizarNomeNobreak(?string $nome, string $hostname): string {
+    $nome = trim((string)$nome);
+    if ($nome === '' || preg_match('/^\d+$/', $nome)) {
+        return 'Nobreak USB - ' . $hostname;
+    }
+    return $nome;
+}
+
 $db = (new Database())->getConnection();
 
 if (!$db) {
@@ -153,12 +175,12 @@ try {
 
     // 5. Salvar telemetria do nobreak associado (Auto-cobertura se houver bateria/UPS)
     if ($nobreak) {
-        $nb_nome = $nobreak['nome'] ?? 'Nobreak USB';
+        $nb_nome = normalizarNomeNobreak($nobreak['nome'] ?? null, $hostname);
         $nb_ip = $nobreak['ip'] ?? $ip;
-        $nb_bateria = isset($nobreak['bateria']) ? (float)$nobreak['bateria'] : null;
-        $nb_autonomia = isset($nobreak['autonomia']) ? (float)$nobreak['autonomia'] : null;
-        $nb_tensao = isset($nobreak['tensao']) ? (float)$nobreak['tensao'] : 220;
-        $nb_carga = isset($nobreak['carga']) ? (float)$nobreak['carga'] : 15;
+        $nb_bateria = isset($nobreak['bateria']) ? min(100, max(0, (float)$nobreak['bateria'])) : null;
+        $nb_autonomia = normalizarAutonomiaNobreak($nobreak['autonomia'] ?? null);
+        $nb_tensao = isset($nobreak['tensao']) ? (float)$nobreak['tensao'] : null;
+        $nb_carga = isset($nobreak['carga']) ? min(100, max(0, (float)$nobreak['carga'])) : null;
         $nb_status = $nobreak['status'] ?? 'online';
 
         // Verificar se já existe o nobreak cadastrado
@@ -184,8 +206,12 @@ try {
         if ($nb_autonomia !== null) {
             $nb_sensores[] = ['nome' => 'Tempo de Autonomia (Minutos)', 'tipo' => 'uptime', 'valor' => $nb_autonomia];
         }
-        $nb_sensores[] = ['nome' => 'Tensão de Entrada (V)', 'tipo' => 'tensao', 'valor' => $nb_tensao];
-        $nb_sensores[] = ['nome' => 'Carga (%)', 'tipo' => 'carga_nobreak', 'valor' => $nb_carga];
+        if ($nb_tensao !== null && $nb_tensao > 0 && $nb_tensao < 500) {
+            $nb_sensores[] = ['nome' => 'Tensão de Entrada (V)', 'tipo' => 'tensao', 'valor' => $nb_tensao];
+        }
+        if ($nb_carga !== null) {
+            $nb_sensores[] = ['nome' => 'Carga (%)', 'tipo' => 'carga_nobreak', 'valor' => $nb_carga];
+        }
 
         foreach ($nb_sensores as $s) {
             $sensor_id = $getOrCreateSensor($db, $nb_id, $s['nome'], $s['tipo']);

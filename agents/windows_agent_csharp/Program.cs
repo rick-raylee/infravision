@@ -702,7 +702,6 @@ namespace InfraVisionAgent
                 IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
                 TcpConnectionInformation[] connections = properties.GetActiveTcpConnections();
                 int count = 0;
-                Random rand = new Random();
 
                 foreach (TcpConnectionInformation conn in connections)
                 {
@@ -725,8 +724,8 @@ namespace InfraVisionAgent
                         connDict["ip_origem"] = ipAddress;
                         connDict["destino"] = remoteIp;
                         connDict["servico"] = service;
-                        connDict["latencia"] = rand.Next(1, 15);
-                        connDict["carga"] = rand.Next(5, 75);
+                        connDict["latencia"] = 0;
+                        connDict["carga"] = 0;
                         list.Add(connDict);
 
                         count++;
@@ -860,6 +859,31 @@ namespace InfraVisionAgent
             return info;
         }
 
+        private static int? NormalizeBatteryRunTimeMinutes(object batteryRuntime)
+        {
+            if (batteryRuntime == null) return null;
+            int minutes = Convert.ToInt32(batteryRuntime);
+            // WMI: 0, 65535 e ~71582788 = desconhecido (comum na tomada AC)
+            if (minutes <= 0 || minutes >= 65535 || minutes >= 71582700 || minutes > 10080)
+            {
+                return null;
+            }
+            return minutes;
+        }
+
+        private static string NormalizeBatteryName(string batteryName, string hostname)
+        {
+            if (string.IsNullOrWhiteSpace(batteryName)) return string.Format("Nobreak USB - {0}", hostname);
+            string trimmed = batteryName.Trim();
+            bool onlyDigits = true;
+            foreach (char c in trimmed)
+            {
+                if (!char.IsDigit(c)) { onlyDigits = false; break; }
+            }
+            if (onlyDigits) return string.Format("Nobreak USB - {0}", hostname);
+            return trimmed;
+        }
+
         private static Dictionary<string, object> GetBatteryInfo(string ipAddress, string hostname)
         {
             try
@@ -873,13 +897,12 @@ namespace InfraVisionAgent
                         object batteryStatus = obj["BatteryStatus"];
                         
                         object nameObj = obj["Name"];
-                        string batteryName = (nameObj != null) ? nameObj.ToString() : string.Format("Nobreak USB - {0}", hostname);
+                        string batteryName = NormalizeBatteryName(nameObj != null ? nameObj.ToString() : null, hostname);
 
                         string statusStr = "online";
                         if (batteryStatus != null)
                         {
                             ushort statusVal = Convert.ToUInt16(batteryStatus);
-                            // Status values: 1 = Other, 2 = Unknown, 3 = Fully Charged, 4 = Low, 5 = Critical, 6 = Charging, 7 = Charging and High, 8 = Charging and Low, 9 = Charging and Critical, 10 = Undefined, 11 = Partially Charged
                             if (statusVal == 1 || statusVal == 8 || statusVal == 9 || statusVal == 4 || statusVal == 5)
                             {
                                 statusStr = "alerta";
@@ -889,10 +912,15 @@ namespace InfraVisionAgent
                         Dictionary<string, object> battery = new Dictionary<string, object>();
                         battery["nome"] = batteryName;
                         battery["ip"] = ipAddress;
-                        battery["bateria"] = batteryPercent ?? 100;
-                        battery["autonomia"] = batteryRuntime ?? 120;
-                        battery["tensao"] = 220;
-                        battery["carga"] = 15;
+                        if (batteryPercent != null)
+                        {
+                            battery["bateria"] = Math.Min(100, Math.Max(0, Convert.ToInt32(batteryPercent)));
+                        }
+                        int? runMinutes = NormalizeBatteryRunTimeMinutes(batteryRuntime);
+                        if (runMinutes.HasValue)
+                        {
+                            battery["autonomia"] = runMinutes.Value;
+                        }
                         battery["status"] = statusStr;
                         return battery;
                     }
