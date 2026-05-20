@@ -109,18 +109,19 @@
         }
         
         trafficData.forEach(item => {
-            const loadClass = item.load > 80 ? 'bg-danger' : (item.load > 50 ? 'bg-warning' : 'bg-success');
+            const load = Number(item.load) || 0;
+            const loadClass = load > 80 ? 'bg-danger' : (load > 50 ? 'bg-warning' : 'bg-success');
             const row = `
                 <tr>
-                    <td><i class="fa-solid fa-desktop me-2 text-secondary"></i>\${item.origin}</td>
-                    <td><code class="text-info">\${item.ip}</code></td>
+                    <td><i class="fa-solid fa-desktop me-2 text-secondary"></i>${item.origin ?? item.origem ?? ''}</td>
+                    <td><code class="text-info">${item.ip ?? ''}</code></td>
                     <td class="text-center text-primary"><i class="fa-solid fa-angles-right flow-arrow"></i></td>
-                    <td><i class="fa-solid fa-server me-2 text-primary"></i>\${item.destino}</td>
-                    <td><span class="badge border border-secondary text-light">\${item.service}</span></td>
-                    <td>\${item.latency}</td>
+                    <td><i class="fa-solid fa-server me-2 text-primary"></i>${item.destino ?? ''}</td>
+                    <td><span class="badge border border-secondary text-light">${item.service ?? item.servico ?? ''}</span></td>
+                    <td>${item.latency ?? ''}</td>
                     <td style="width: 150px;">
                         <div class="progress" style="height: 6px; background-color: #1e2638;">
-                            <div class="progress-bar \${loadClass}" role="progressbar" style="width: \${item.load}%"></div>
+                            <div class="progress-bar ${loadClass}" role="progressbar" style="width: ${load}%"></div>
                         </div>
                     </td>
                 </tr>
