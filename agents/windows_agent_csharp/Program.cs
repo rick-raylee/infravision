@@ -550,9 +550,15 @@ namespace InfraVisionAgent
             List<Dictionary<string, object>> services = GetServicesInfo();
             metrics["servicos"] = services;
 
-            // 7. Connections
+            // 7. Connections + real network bandwidth
             List<Dictionary<string, object>> connections = GetActiveConnections(hostname, ipAddress);
             metrics["conexoes"] = connections;
+
+            // Network bandwidth (Mbps in/out sampled over 1 second)
+            double netSent = 0, netRecv = 0;
+            GetNetworkBandwidth(out netSent, out netRecv);
+            metrics["rede_out_mbps"] = netSent;
+            metrics["rede_in_mbps"]  = netRecv;
 
             // 8. Hardware details & OS
             SystemDetails systemInfo = GetSystemInfo();
@@ -707,6 +713,21 @@ namespace InfraVisionAgent
             return list;
         }
 
+        private static int PingHost(string host)
+        {
+            try
+            {
+                using (Ping ping = new Ping())
+                {
+                    PingReply reply = ping.Send(host, 500);
+                    if (reply != null && reply.Status == IPStatus.Success)
+                        return (int)reply.RoundtripTime;
+                }
+            }
+            catch { }
+            return 0;
+        }
+
         private static List<Dictionary<string, object>> GetActiveConnections(string hostname, string ipAddress)
         {
             List<Dictionary<string, object>> list = new List<Dictionary<string, object>>();
@@ -714,40 +735,101 @@ namespace InfraVisionAgent
             {
                 IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
                 TcpConnectionInformation[] connections = properties.GetActiveTcpConnections();
-                int count = 0;
 
+                // Count all established non-loopback connections for load calculation
+                int totalConn = 0;
+                List<TcpConnectionInformation> established = new List<TcpConnectionInformation>();
                 foreach (TcpConnectionInformation conn in connections)
                 {
                     if (conn.State == TcpState.Established)
                     {
-                        string remoteIp = conn.RemoteEndPoint.Address.ToString();
-                        if (remoteIp == "127.0.0.1" || remoteIp == "::1") continue;
-
-                        int port = conn.RemoteEndPoint.Port;
-                        string service = string.Format("Porta {0}", port);
-                        if (port == 80) service = "HTTP (80)";
-                        else if (port == 443) service = "HTTPS (443)";
-                        else if (port == 445) service = "SMB (445)";
-                        else if (port == 3306) service = "MySQL (3306)";
-                        else if (port == 22) service = "SSH (22)";
-                        else if (port == 3389) service = "RDP (3389)";
-
-                        Dictionary<string, object> connDict = new Dictionary<string, object>();
-                        connDict["origem"] = hostname;
-                        connDict["ip_origem"] = ipAddress;
-                        connDict["destino"] = remoteIp;
-                        connDict["servico"] = service;
-                        connDict["latencia"] = 0;
-                        connDict["carga"] = 0;
-                        list.Add(connDict);
-
-                        count++;
-                        if (count >= 5) break;
+                        string rIp = conn.RemoteEndPoint.Address.ToString();
+                        if (rIp != "127.0.0.1" && rIp != "::1")
+                        {
+                            totalConn++;
+                            established.Add(conn);
+                        }
                     }
+                }
+
+                // Report up to 8 connections, calculate load as % of a 100-conn max
+                int reported = 0;
+                foreach (TcpConnectionInformation conn in established)
+                {
+                    string remoteIp = conn.RemoteEndPoint.Address.ToString();
+                    int port = conn.RemoteEndPoint.Port;
+                    string service = string.Format("Porta {0}", port);
+                    if (port == 80)   service = "HTTP (80)";
+                    else if (port == 443)  service = "HTTPS (443)";
+                    else if (port == 445)  service = "SMB (445)";
+                    else if (port == 3306) service = "MySQL (3306)";
+                    else if (port == 22)   service = "SSH (22)";
+                    else if (port == 3389) service = "RDP (3389)";
+                    else if (port == 8080) service = "HTTP-Alt (8080)";
+                    else if (port == 5228) service = "GCM (5228)";
+                    else if (port == 1433) service = "MSSQL (1433)";
+                    else if (port == 53)   service = "DNS (53)";
+
+                    int latency = PingHost(remoteIp);
+                    int load = Math.Min(100, (totalConn * 100) / Math.Max(1, 100));
+
+                    Dictionary<string, object> connDict = new Dictionary<string, object>();
+                    connDict["origem"]    = hostname;
+                    connDict["ip_origem"] = ipAddress;
+                    connDict["destino"]   = remoteIp;
+                    connDict["servico"]   = service;
+                    connDict["latencia"]  = latency;
+                    connDict["carga"]     = load;
+                    list.Add(connDict);
+
+                    reported++;
+                    if (reported >= 8) break;
                 }
             }
             catch { }
             return list;
+        }
+
+        private static void GetNetworkBandwidth(out double sentMbps, out double receivedMbps)
+        {
+            sentMbps = 0;
+            receivedMbps = 0;
+            try
+            {
+                long sentBefore = 0, recvBefore = 0;
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus == OperationalStatus.Up &&
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
+                    {
+                        var stats = ni.GetIPStatistics();
+                        sentBefore += stats.BytesSent;
+                        recvBefore += stats.BytesReceived;
+                    }
+                }
+
+                Thread.Sleep(1000); // sample over 1 second
+
+                long sentAfter = 0, recvAfter = 0;
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus == OperationalStatus.Up &&
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
+                    {
+                        var stats = ni.GetIPStatistics();
+                        sentAfter += stats.BytesSent;
+                        recvAfter += stats.BytesReceived;
+                    }
+                }
+
+                double sentBytes = sentAfter - sentBefore;
+                double recvBytes = recvAfter - recvBefore;
+                sentMbps     = Math.Round(sentBytes * 8 / 1_000_000.0, 3);
+                receivedMbps = Math.Round(recvBytes * 8 / 1_000_000.0, 3);
+            }
+            catch { }
         }
 
         private static string GetLoggedUser()

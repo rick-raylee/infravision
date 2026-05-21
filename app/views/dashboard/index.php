@@ -243,9 +243,12 @@
                 }
                 if (data.rede && data.rede.in && data.rede.out) {
                     netChart.updateSeries([
-                        { name: 'Inbound (Mbps)', data: data.rede.in },
-                        { name: 'Outbound (Mbps)', data: data.rede.out }
+                        { name: 'Entrada (Mbps)', data: data.rede.in },
+                        { name: 'Saída (Mbps)',   data: data.rede.out }
                     ]);
+                    if (data.rede.labels && data.rede.labels.length > 0) {
+                        netChart.updateOptions({ xaxis: { categories: data.rede.labels } });
+                    }
                 }
             })
             .catch(error => console.error('Erro ao buscar dados:', error));

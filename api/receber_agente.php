@@ -121,10 +121,18 @@ try {
 
     // 3. Preparar sensores para salvar
     $sensoresParaSalvar = [
-        ['nome' => 'CPU Load', 'tipo' => 'cpu', 'valor' => $cpu],
-        ['nome' => 'RAM Livre (MB)', 'tipo' => 'ram', 'valor' => $mem_livre],
-        ['nome' => 'RAM Total (MB)', 'tipo' => 'ram', 'valor' => $mem_total]
+        ['nome' => 'CPU Load',        'tipo' => 'cpu', 'valor' => $cpu],
+        ['nome' => 'RAM Livre (MB)',   'tipo' => 'ram', 'valor' => $mem_livre],
+        ['nome' => 'RAM Total (MB)',   'tipo' => 'ram', 'valor' => $mem_total]
     ];
+
+    // Bandwidth de rede (enviado pelo agente C# v2+)
+    if (isset($dados['rede_in_mbps'])) {
+        $sensoresParaSalvar[] = ['nome' => 'Rede In (Mbps)',  'tipo' => 'rede_in',  'valor' => (float)$dados['rede_in_mbps']];
+    }
+    if (isset($dados['rede_out_mbps'])) {
+        $sensoresParaSalvar[] = ['nome' => 'Rede Out (Mbps)', 'tipo' => 'rede_out', 'valor' => (float)$dados['rede_out_mbps']];
+    }
 
     // Adicionar discos
     foreach ($discos as $disco) {
