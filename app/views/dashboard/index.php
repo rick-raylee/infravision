@@ -90,6 +90,13 @@
     border-color: var(--noc-primary);
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 </style>
 
 <div class="row g-4 mb-4">
@@ -100,8 +107,27 @@
                 <span><i class="fa-solid fa-chart-area me-2"></i> Tráfego de Rede (Core Switch)</span>
                 <span class="badge bg-success">Online</span>
             </div>
-            <div class="noc-card-body">
-                <div id="networkChart" style="height: 300px;"></div>
+            <div class="noc-card-body d-flex align-items-center justify-content-center" style="min-height: 300px;">
+                <div class="row w-100 g-4 align-items-center">
+                    <div class="col-6 text-center border-end border-secondary border-opacity-10">
+                        <div id="networkChartIn" style="min-height: 180px;"></div>
+                        <div class="mt-1">
+                            <span class="badge bg-primary-subtle text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill">
+                                <i class="fa-solid fa-download me-1 animate-pulse"></i> Entrada
+                            </span>
+                            <div class="text-secondary small mt-2" id="net-in-peak" style="font-size: 0.8rem;">Pico: 0.00 Mbps (Escala: 10 Mbps)</div>
+                        </div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div id="networkChartOut" style="min-height: 180px;"></div>
+                        <div class="mt-1">
+                            <span class="badge bg-success-subtle text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
+                                <i class="fa-solid fa-upload me-1 animate-pulse"></i> Saída
+                            </span>
+                            <div class="text-secondary small mt-2" id="net-out-peak" style="font-size: 0.8rem;">Pico: 0.00 Mbps (Escala: 10 Mbps)</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -192,19 +218,118 @@
         tooltip: { theme: 'dark' }
     };
 
-    // Gráfico de Rede
-    var netOptions = {
-        series: [{ name: 'Inbound (Mbps)', data: [0,0,0,0,0,0,0,0,0,0,0] },
-                 { name: 'Outbound (Mbps)', data: [0,0,0,0,0,0,0,0,0,0,0] }],
-        chart: { type: 'area', height: 300, stacked: false },
-        colors: ['#3b82f6', '#10b981'],
-        dataLabels: { enabled: false },
-        stroke: { curve: 'smooth', width: 2 },
-        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
-        xaxis: { categories: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30', '10:35', '10:40', '10:45', '10:50'] }
+    // Valores Globais de Tráfego de Rede
+    var currentNetIn = 0;
+    var currentNetInMax = 10;
+    var currentNetOut = 0;
+    var currentNetOutMax = 10;
+
+    function getGaugeMax(val) {
+        if (val <= 10) return 10;
+        if (val <= 100) return 100;
+        if (val <= 1000) return 1000;
+        return Math.ceil(val / 1000) * 1000;
+    }
+
+    // Gráficos de Rede (Velocímetros)
+    var inOptions = {
+        series: [0],
+        chart: {
+            type: 'radialBar',
+            height: 200,
+            sparkline: { enabled: true }
+        },
+        plotOptions: {
+            radialBar: {
+                startAngle: -90,
+                endAngle: 90,
+                track: {
+                    background: '#1e2638',
+                    strokeWidth: '97%',
+                    margin: 5,
+                },
+                dataLabels: {
+                    name: { show: false },
+                    value: {
+                        offsetY: -5,
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: '#fff',
+                        formatter: function(val) {
+                            return currentNetIn.toFixed(2) + ' Mbps';
+                        }
+                    }
+                }
+            }
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'dark',
+                type: 'horizontal',
+                shadeIntensity: 0.5,
+                gradientToColors: ['#60a5fa'],
+                inverseColors: true,
+                opacityFrom: 1,
+                opacityTo: 1,
+                stops: [0, 100]
+            }
+        },
+        colors: ['#3b82f6'],
+        labels: ['Entrada']
     };
-    var netChart = new ApexCharts(document.querySelector("#networkChart"), netOptions);
-    netChart.render();
+
+    var outOptions = {
+        series: [0],
+        chart: {
+            type: 'radialBar',
+            height: 200,
+            sparkline: { enabled: true }
+        },
+        plotOptions: {
+            radialBar: {
+                startAngle: -90,
+                endAngle: 90,
+                track: {
+                    background: '#1e2638',
+                    strokeWidth: '97%',
+                    margin: 5,
+                },
+                dataLabels: {
+                    name: { show: false },
+                    value: {
+                        offsetY: -5,
+                        fontSize: '20px',
+                        fontWeight: '700',
+                        color: '#fff',
+                        formatter: function(val) {
+                            return currentNetOut.toFixed(2) + ' Mbps';
+                        }
+                    }
+                }
+            }
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'dark',
+                type: 'horizontal',
+                shadeIntensity: 0.5,
+                gradientToColors: ['#34d399'],
+                inverseColors: true,
+                opacityFrom: 1,
+                opacityTo: 1,
+                stops: [0, 100]
+            }
+        },
+        colors: ['#10b981'],
+        labels: ['Saída']
+    };
+
+    var chartIn = new ApexCharts(document.querySelector("#networkChartIn"), inOptions);
+    var chartOut = new ApexCharts(document.querySelector("#networkChartOut"), outOptions);
+    chartIn.render();
+    chartOut.render();
 
     // Gráfico de CPU
     var cpuData = <?= json_encode(array_map('floatval', array_column($topCpu, 'valor'))) ?>;
@@ -242,13 +367,27 @@
                     document.getElementById('val-umidade').innerText = data.umidade + '%';
                 }
                 if (data.rede && data.rede.in && data.rede.out) {
-                    netChart.updateSeries([
-                        { name: 'Entrada (Mbps)', data: data.rede.in },
-                        { name: 'Saída (Mbps)',   data: data.rede.out }
-                    ]);
-                    if (data.rede.labels && data.rede.labels.length > 0) {
-                        netChart.updateOptions({ xaxis: { categories: data.rede.labels } });
-                    }
+                    // 1. Obter valores mais recentes
+                    currentNetIn = data.rede.in.length > 0 ? data.rede.in[data.rede.in.length - 1] : 0;
+                    currentNetOut = data.rede.out.length > 0 ? data.rede.out[data.rede.out.length - 1] : 0;
+                    
+                    // 2. Determinar limites máximos da escala
+                    currentNetInMax = getGaugeMax(currentNetIn);
+                    currentNetOutMax = getGaugeMax(currentNetOut);
+                    
+                    // 3. Converter para porcentagem do velocímetro
+                    var pctIn = (currentNetIn / currentNetInMax) * 100;
+                    var pctOut = (currentNetOut / currentNetOutMax) * 100;
+                    
+                    // 4. Atualizar velocímetros
+                    chartIn.updateSeries([pctIn]);
+                    chartOut.updateSeries([pctOut]);
+                    
+                    // 5. Exibir pico e escalas nas legendas
+                    var peakIn = Math.max(...data.rede.in);
+                    var peakOut = Math.max(...data.rede.out);
+                    document.getElementById('net-in-peak').innerText = 'Pico: ' + peakIn.toFixed(2) + ' Mbps (Escala: ' + currentNetInMax + ' Mbps)';
+                    document.getElementById('net-out-peak').innerText = 'Pico: ' + peakOut.toFixed(2) + ' Mbps (Escala: ' + currentNetOutMax + ' Mbps)';
                 }
             })
             .catch(error => console.error('Erro ao buscar dados:', error));
