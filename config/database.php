@@ -1,5 +1,8 @@
 <?php
 
+// Fuso horário do Brasil (UTC-3)
+date_default_timezone_set('America/Sao_Paulo');
+
 class Database {
     private $host;
     private $port;
@@ -66,7 +69,9 @@ class Database {
             $this->conn = new PDO($dsn, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            $this->conn->exec("set names utf8mb4");
+            $this->conn->exec("SET NAMES utf8mb4");
+            // Forçar fuso horário da sessão MySQL para horário de Brasília (UTC-3)
+            $this->conn->exec("SET time_zone = '-03:00'");
         } catch(PDOException $exception) {
             $this->handleConnectionError($exception);
         }
