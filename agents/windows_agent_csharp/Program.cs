@@ -419,7 +419,37 @@ namespace InfraVisionAgent
             }
 
             string taskName = "InfraVisionAgent";
-            string command = string.Format("schtasks.exe /Create /TN \"{0}\" /TR \"\\\"{1}\\\"\" /SC ONSTART /RU \"SYSTEM\" /F", taskName, exePath);
+
+            // Gerar XML da tarefa com limite de execucao PT0S (sem timeout) e reinicio automatico
+            string xmlTask =
+                "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n" +
+                "<Task version=\"1.2\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\r\n" +
+                "  <RegistrationInfo><Description>InfraVision NOC Agent</Description></RegistrationInfo>\r\n" +
+                "  <Triggers>\r\n" +
+                "    <BootTrigger><Enabled>true</Enabled><Delay>PT30S</Delay></BootTrigger>\r\n" +
+                "  </Triggers>\r\n" +
+                "  <Principals>\r\n" +
+                "    <Principal id=\"Author\"><UserId>S-1-5-18</UserId><RunLevel>HighestAvailable</RunLevel></Principal>\r\n" +
+                "  </Principals>\r\n" +
+                "  <Settings>\r\n" +
+                "    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>\r\n" +
+                "    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>\r\n" +
+                "    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>\r\n" +
+                "    <AllowHardTerminate>false</AllowHardTerminate>\r\n" +
+                "    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>\r\n" +
+                "    <RestartOnFailure><Interval>PT1M</Interval><Count>999</Count></RestartOnFailure>\r\n" +
+                "    <Enabled>true</Enabled>\r\n" +
+                "    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>\r\n" +
+                "  </Settings>\r\n" +
+                "  <Actions Context=\"Author\">\r\n" +
+                string.Format("    <Exec><Command>\"{0}\"</Command></Exec>\r\n", exePath.Replace("\"", "\\\"")) +
+                "  </Actions>\r\n" +
+                "</Task>";
+
+            string xmlPath = Path.Combine(Path.GetTempPath(), "InfraVisionAgentTask.xml");
+            File.WriteAllText(xmlPath, xmlTask, Encoding.Unicode);
+
+            string command = string.Format("schtasks.exe /Create /TN \"{0}\" /XML \"{1}\" /F", taskName, xmlPath);
 
             try
             {
@@ -443,11 +473,11 @@ namespace InfraVisionAgent
                         Console.WriteLine("   AGENTE INSTALADO COM SUCESSO NO SISTEMA!");
                         Console.WriteLine("==================================================");
                         Console.ForegroundColor = ConsoleColor.White;
-                        Console.WriteLine("O agente InfraVision rodará em segundo plano (como SYSTEM)");
-                        Console.WriteLine("toda vez que o Windows iniciar.");
+                        Console.WriteLine("O agente roda em segundo plano continuamente (sem timeout).");
+                        Console.WriteLine("Reinicia automaticamente em caso de falha.");
                         Console.WriteLine();
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("Para iniciar o agente agora sem reiniciar a máquina, rode:");
+                        Console.WriteLine("Para iniciar AGORA sem reiniciar, rode como Admin:");
                         Console.WriteLine(string.Format("  schtasks.exe /Run /TN \"{0}\"", taskName));
                         Console.ResetColor();
                     }
@@ -455,7 +485,7 @@ namespace InfraVisionAgent
                     {
                         string err = process.StandardError.ReadToEnd();
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(string.Format("Erro ao cadastrar agente no Agendador de Tarefas: {0}", err));
+                        Console.WriteLine(string.Format("Erro ao instalar no Agendador de Tarefas: {0}", err));
                         Console.ResetColor();
                     }
                 }
@@ -465,6 +495,10 @@ namespace InfraVisionAgent
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(string.Format("Erro ao rodar instalador: {0}", ex.Message));
                 Console.ResetColor();
+            }
+            finally
+            {
+                try { File.Delete(xmlPath); } catch { }
             }
         }
 
