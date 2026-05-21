@@ -12,9 +12,11 @@
                 <select class="form-select bg-dark border-secondary text-light w-auto" id="filterCategory">
                     <option value="">Todas as categorias</option>
                     <option value="Sistema Operacional">Sistema Operacional</option>
-                    <option value="Aplicações">Aplicações</option>
-                    <option value="Rede/Segurança">Rede/Segurança</option>
-                    <option value="Servidores Web">Servidores Web</option>
+                    <option value="Aplicação">Aplicação</option>
+                    <option value="Segurança e Auditoria">Segurança e Auditoria</option>
+                    <option value="Rede">Rede</option>
+                    <option value="Servidor Web">Servidor Web</option>
+                    <option value="Serviços Específicos">Serviços Específicos</option>
                 </select>
             </div>
         </div>
@@ -59,15 +61,21 @@
                                     $badgeClass = 'bg-primary';
                                     $catIcon = 'fa-desktop';
                                     
-                                    if ($cat === 'Rede/Segurança') {
-                                        $badgeClass = 'bg-danger text-light';
-                                        $catIcon = 'fa-shield-halved';
-                                    } elseif ($cat === 'Aplicações') {
+                                    if ($cat === 'Aplicação') {
                                         $badgeClass = 'bg-warning text-dark';
                                         $catIcon = 'fa-cubes';
-                                    } elseif ($cat === 'Servidores Web') {
+                                    } elseif ($cat === 'Segurança e Auditoria') {
+                                        $badgeClass = 'bg-danger text-light';
+                                        $catIcon = 'fa-shield-halved';
+                                    } elseif ($cat === 'Rede') {
+                                        $badgeClass = 'bg-success text-light';
+                                        $catIcon = 'fa-network-wired';
+                                    } elseif ($cat === 'Servidor Web') {
                                         $badgeClass = 'bg-info text-dark';
                                         $catIcon = 'fa-globe';
+                                    } elseif ($cat === 'Serviços Específicos') {
+                                        $badgeClass = 'bg-secondary text-light';
+                                        $catIcon = 'fa-database';
                                     }
                                 ?>
                                 <tr class="border-secondary border-opacity-10 log-row" 
