@@ -322,8 +322,38 @@ while ($true) {
             timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         }
 
-        $PayloadHash["monitor_nobreak"] = $MonitorNobreak
-        if ($MonitorNobreak -and $null -ne $BatteryPercent) {
+        # Determinar se é nobreak real
+        $IsUps = $false
+        if ($null -ne $BatteryPercent) {
+            if ($MonitorNobreak) {
+                $IsUps = $true
+            } else {
+                # Detectar se é laptop
+                $IsLaptop = $false
+                try {
+                    $Chassis = Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue
+                    if ($Chassis -and $Chassis.ChassisTypes) {
+                        foreach ($t in $Chassis.ChassisTypes) {
+                            if ($t -in @(8, 9, 10, 11, 12, 14, 30, 31, 32)) {
+                                $IsLaptop = $true
+                                break
+                            }
+                        }
+                    }
+                } catch {}
+
+                if ($BatteryName -and $BatteryName -match "UPS") {
+                    $IsUps = $true
+                } elseif ($TipoDispositivo -ne "computador") {
+                    $IsUps = $true
+                } elseif (-not $IsLaptop) {
+                    $IsUps = $true
+                }
+            }
+        }
+
+        $PayloadHash["monitor_nobreak"] = $IsUps
+        if ($IsUps) {
             $NbNome = if ($BatteryName -and $BatteryName -notmatch '^\d+$') { $BatteryName } else { "Nobreak USB - $Hostname" }
             $NbAutonomia = $null
             if ($null -ne $BatteryRuntime -and $BatteryRuntime -gt 0 -and $BatteryRuntime -lt 65535 -and $BatteryRuntime -lt 71582700 -and $BatteryRuntime -le 10080) {

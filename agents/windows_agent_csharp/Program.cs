@@ -607,15 +607,17 @@ namespace InfraVisionAgent
             // 9. Timestamp
             metrics["timestamp"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-            // 10. Nobreak/UPS apenas se habilitado (bateria de notebook NAO e nobreak)
-            metrics["monitor_nobreak"] = config.MonitorNobreak;
-            if (config.MonitorNobreak)
+            // 10. Nobreak/UPS (auto-detecção: bateria de notebook NAO e nobreak)
+            bool isLaptop = IsLaptop();
+            Dictionary<string, object> batteryInfo = GetBatteryInfo(ipAddress, hostname, isLaptop, config.MonitorNobreak, metrics["tipo"].ToString());
+            if (batteryInfo != null)
             {
-                Dictionary<string, object> batteryInfo = GetBatteryInfo(ipAddress, hostname);
-                if (batteryInfo != null)
-                {
-                    metrics["nobreak"] = batteryInfo;
-                }
+                metrics["monitor_nobreak"] = true;
+                metrics["nobreak"] = batteryInfo;
+            }
+            else
+            {
+                metrics["monitor_nobreak"] = false;
             }
 
             return metrics;
@@ -860,8 +862,8 @@ namespace InfraVisionAgent
 
                 double sentBytes = sentAfter - sentBefore;
                 double recvBytes = recvAfter - recvBefore;
-                sentMbps     = Math.Round(sentBytes * 8 / 1_000_000.0, 3);
-                receivedMbps = Math.Round(recvBytes * 8 / 1_000_000.0, 3);
+                sentMbps     = Math.Round(sentBytes * 8 / 1000000.0, 3);
+                receivedMbps = Math.Round(recvBytes * 8 / 1000000.0, 3);
             }
             catch { }
         }
@@ -1013,7 +1015,34 @@ namespace InfraVisionAgent
             return trimmed;
         }
 
-        private static Dictionary<string, object> GetBatteryInfo(string ipAddress, string hostname)
+        private static bool IsLaptop()
+        {
+            try
+            {
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT ChassisTypes FROM Win32_SystemEnclosure"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        ushort[] types = obj["ChassisTypes"] as ushort[];
+                        if (types != null)
+                        {
+                            foreach (ushort type in types)
+                            {
+                                // 8: Portable, 9: Laptop, 10: Notebook, 11: Hand Held, 12: Docking Station, 14: Sub Notebook, 30: Tablet, 31: Convertible, 32: Detachable
+                                if (type == 8 || type == 9 || type == 10 || type == 11 || type == 12 || type == 14 || type == 30 || type == 31 || type == 32)
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private static Dictionary<string, object> GetBatteryInfo(string ipAddress, string hostname, bool isLaptop, bool forceMonitor, string deviceType)
         {
             try
             {
@@ -1026,7 +1055,36 @@ namespace InfraVisionAgent
                         object batteryStatus = obj["BatteryStatus"];
                         
                         object nameObj = obj["Name"];
-                        string batteryName = NormalizeBatteryName(nameObj != null ? nameObj.ToString() : null, hostname);
+                        string batteryName = nameObj != null ? nameObj.ToString() : string.Empty;
+
+                        // Se a monitoração manual estiver desligada, aplicamos as regras de auto-detecção para evitar bateria de notebook
+                        if (!forceMonitor)
+                        {
+                            bool isRealUps = false;
+                            
+                            // Regra A: Se o nome contém "UPS", é nobreak
+                            if (batteryName.IndexOf("UPS", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                isRealUps = true;
+                            }
+                            // Regra B: Se o dispositivo é um servidor (e tem bateria), é nobreak
+                            else if (deviceType != "computador")
+                            {
+                                isRealUps = true;
+                            }
+                            // Regra C: Se NÃO for laptop (ex: desktop) e tem bateria, é nobreak
+                            else if (!isLaptop)
+                            {
+                                isRealUps = true;
+                            }
+
+                            if (!isRealUps)
+                            {
+                                continue; // Ignora e passa para a próxima bateria (bateria de notebook interna)
+                            }
+                        }
+
+                        string normalizedName = NormalizeBatteryName(batteryName, hostname);
 
                         string statusStr = "online";
                         if (batteryStatus != null)
@@ -1039,7 +1097,7 @@ namespace InfraVisionAgent
                         }
 
                         Dictionary<string, object> battery = new Dictionary<string, object>();
-                        battery["nome"] = batteryName;
+                        battery["nome"] = normalizedName;
                         battery["ip"] = ipAddress;
                         if (batteryPercent != null)
                         {

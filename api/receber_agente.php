@@ -201,8 +201,10 @@ try {
             $stmtUpdateNB = $db->prepare("UPDATE dispositivos SET nome = ?, status = ?, ultimo_check = NOW() WHERE id = ?");
             $stmtUpdateNB->execute([$nb_nome, $nb_status, $nb_id]);
         } else {
-            // Nao cria nobreak automaticamente (evita bateria de notebook/servidor sem UPS)
-            $nobreak = null;
+            // Cria o nobreak automaticamente caso tenha sido detectado e validado pelo agente
+            $stmtInsertNB = $db->prepare("INSERT INTO dispositivos (nome, ip, tipo, status, ultimo_check) VALUES (?, ?, 'nobreak', ?, NOW())");
+            $stmtInsertNB->execute([$nb_nome, $nb_ip, $nb_status]);
+            $nb_id = $db->lastInsertId();
         }
     } else {
         $nobreak = null;
