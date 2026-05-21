@@ -20,6 +20,11 @@ class AuthController {
             $_SESSION['usuario_nome'] = 'Administrador';
             $_SESSION['usuario_nivel'] = 'admin';
             
+            // Gravar log de auditoria
+            require_once 'app/models/AuditLog.php';
+            $db = (new Database())->getConnection();
+            AuditLog::write($db, $_SESSION['usuario_id'], 'Login efetuado', 'Usuário: ' . $_SESSION['usuario_nome']);
+            
             $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
             header("Location: $base_path/dashboard");
             exit;
@@ -30,6 +35,13 @@ class AuthController {
     }
 
     public function logout() {
+        // Gravar log de auditoria antes de destruir a sessão
+        if (isset($_SESSION['usuario_id'])) {
+            require_once 'app/models/AuditLog.php';
+            $db = (new Database())->getConnection();
+            AuditLog::write($db, $_SESSION['usuario_id'], 'Logout efetuado', 'Usuário: ' . ($_SESSION['usuario_nome'] ?? 'Desconhecido'));
+        }
+
         session_destroy();
         $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
         header("Location: $base_path/login");

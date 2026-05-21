@@ -103,6 +103,10 @@ try {
         $stmt = $db->prepare("INSERT INTO dispositivos (nome, ip, tipo, status, usuario_logado, fabricante, modelo, numero_serie, sistema_operacional, processador, ultimo_check) VALUES (?, ?, ?, 'online', ?, ?, ?, ?, ?, ?, NOW())");
         $stmt->execute([$hostname, $ip, $tipo, $usuario_logado, $fabricante, $modelo, $numero_serie, $sistema_operacional, $processador]);
         $dispositivo_id = $db->lastInsertId();
+        
+        // Gravar log de auditoria
+        require_once __DIR__ . '/../app/models/AuditLog.php';
+        AuditLog::write($db, null, 'Dispositivo auto-descoberto', "Nome: $hostname, IP: $ip, Tipo: $tipo");
     }
 
     // Função auxiliar para buscar ou criar sensor
@@ -205,6 +209,10 @@ try {
             $stmtInsertNB = $db->prepare("INSERT INTO dispositivos (nome, ip, tipo, status, ultimo_check) VALUES (?, ?, 'nobreak', ?, NOW())");
             $stmtInsertNB->execute([$nb_nome, $nb_ip, $nb_status]);
             $nb_id = $db->lastInsertId();
+            
+            // Gravar log de auditoria
+            require_once __DIR__ . '/../app/models/AuditLog.php';
+            AuditLog::write($db, null, 'Dispositivo auto-registrado', "Nobreak: $nb_nome, IP: $nb_ip, Associado a: $hostname");
         }
     } else {
         $nobreak = null;

@@ -37,6 +37,10 @@ class DeviceController {
         $stmt->bindParam(':status', $status);
 
         if ($stmt->execute()) {
+            // Gravar log de auditoria
+            require_once 'app/models/AuditLog.php';
+            AuditLog::write($db, $_SESSION['usuario_id'] ?? null, 'Dispositivo cadastrado', "Nome: $nome, IP: $ip, Tipo: $tipo");
+
             header("Location: " . BASE_PATH . "/servers");
         } else {
             echo "Erro ao cadastrar dispositivo.";

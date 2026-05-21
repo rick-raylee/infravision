@@ -57,6 +57,10 @@ class UserController {
         $stmt->bindParam(':nivel', $nivel);
 
         if ($stmt->execute()) {
+            // Gravar log de auditoria
+            require_once 'app/models/AuditLog.php';
+            AuditLog::write($db, $_SESSION['usuario_id'] ?? null, 'Usuário cadastrado', "Nome: $nome, E-mail: $email, Nível: $nivel");
+
             header("Location: " . BASE_PATH . "/users");
         } else {
             echo "Erro ao cadastrar usuário.";
@@ -120,6 +124,10 @@ class UserController {
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
+            // Gravar log de auditoria
+            require_once 'app/models/AuditLog.php';
+            AuditLog::write($db, $_SESSION['usuario_id'] ?? null, 'Usuário atualizado', "ID: $id, Nome: $nome, E-mail: $email, Nível: $nivel");
+
             header("Location: " . BASE_PATH . "/users");
         } else {
             echo "Erro ao atualizar usuário.";
@@ -142,11 +150,24 @@ class UserController {
         $database = new Database();
         $db = $database->getConnection();
         
+        // Buscar informações do usuário para log de auditoria mais detalhado
+        $stmtUser = $db->prepare("SELECT nome, email FROM usuarios WHERE id = :id");
+        $stmtUser->bindParam(':id', $id);
+        $stmtUser->execute();
+        $user_to_delete = $stmtUser->fetch(PDO::FETCH_ASSOC);
+        $details = $user_to_delete 
+            ? "ID: $id, Nome: {$user_to_delete['nome']}, E-mail: {$user_to_delete['email']}" 
+            : "ID: $id";
+        
         $query = "DELETE FROM usuarios WHERE id = :id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':id', $id);
 
         if ($stmt->execute()) {
+            // Gravar log de auditoria
+            require_once 'app/models/AuditLog.php';
+            AuditLog::write($db, $_SESSION['usuario_id'] ?? null, 'Usuário excluído', $details);
+
             header("Location: " . BASE_PATH . "/users");
         } else {
             echo "Erro ao excluir usuário.";
