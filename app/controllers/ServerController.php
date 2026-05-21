@@ -15,8 +15,12 @@ class ServerController {
                           ORDER BY l.data_leitura DESC LIMIT 1) as cpu_atual,
                          (SELECT l.valor FROM leituras l 
                           JOIN sensores s ON l.sensor_id = s.id 
-                          WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' 
-                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_atual
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' AND s.nome = 'RAM Livre (MB)' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_livre,
+                         (SELECT l.valor FROM leituras l 
+                          JOIN sensores s ON l.sensor_id = s.id 
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' AND s.nome = 'RAM Total (MB)' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_total
                   FROM dispositivos d
                   WHERE d.tipo IN ('servidor_windows', 'servidor_linux')
                   ORDER BY d.criado_em DESC";
@@ -26,6 +30,15 @@ class ServerController {
         
         $servidores = [];
         foreach ($servidores_db as $s) {
+            $ram_livre = $s['ram_livre'] !== null ? (float)$s['ram_livre'] : null;
+            $ram_total = $s['ram_total'] !== null ? (float)$s['ram_total'] : null;
+            
+            $ram_percent = ($ram_livre !== null && $ram_total !== null && $ram_total > 0)
+                ? (($ram_total - $ram_livre) / $ram_total) * 100
+                : 0;
+            $ram_total_gb = $ram_total !== null ? round($ram_total / 1024, 1) : 0;
+            $ram_usada_gb = ($ram_total !== null && $ram_livre !== null) ? round(($ram_total - $ram_livre) / 1024, 1) : 0;
+
             $servidores[] = [
                 'id' => $s['id'],
                 'nome' => $s['hostname'],
@@ -33,7 +46,9 @@ class ServerController {
                 'so' => $s['tipo'] === 'servidor_linux' ? 'Linux Server' : 'Windows Server',
                 'status' => $s['status'],
                 'cpu' => $s['cpu_atual'] !== null ? round($s['cpu_atual']) : 0,
-                'ram' => $s['ram_atual'] !== null ? round($s['ram_atual']) : 0
+                'ram' => $ram_percent,
+                'ram_total' => $ram_total_gb,
+                'ram_usada' => $ram_usada_gb
             ];
         }
 
@@ -64,11 +79,20 @@ class ServerController {
                 $servidor = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($servidor) {
-                    $histQuery = "SELECT l.valor, l.data_leitura, s.tipo
+                    // Obter a capacidade total de RAM mais recente para calcular percentual
+                    $stmtTotal = $db->prepare("SELECT l.valor FROM leituras l 
+                                               JOIN sensores s ON l.sensor_id = s.id 
+                                               WHERE s.dispositivo_id = :id AND s.tipo = 'ram' AND s.nome = 'RAM Total (MB)'
+                                               ORDER BY l.data_leitura DESC LIMIT 1");
+                    $stmtTotal->execute([':id' => $servidor['id']]);
+                    $ram_total = (float)($stmtTotal->fetchColumn() ?: 0);
+
+                    $histQuery = "SELECT l.valor, l.data_leitura, s.tipo, s.nome
                                   FROM leituras l
                                   JOIN sensores s ON s.id = l.sensor_id
-                                  WHERE s.dispositivo_id = :id AND s.tipo IN ('cpu', 'ram')
-                                  ORDER BY l.data_leitura DESC LIMIT 48";
+                                  WHERE s.dispositivo_id = :id 
+                                    AND (s.tipo = 'cpu' OR (s.tipo = 'ram' AND s.nome = 'RAM Livre (MB)'))
+                                  ORDER BY l.data_leitura DESC LIMIT 96";
                     $stmtHist = $db->prepare($histQuery);
                     $stmtHist->execute([':id' => $servidor['id']]);
                     $leituras = array_reverse($stmtHist->fetchAll(PDO::FETCH_ASSOC));
@@ -76,7 +100,12 @@ class ServerController {
                         if ($l['tipo'] === 'cpu') {
                             $historico_cpu[] = round((float)$l['valor'], 1);
                         } elseif ($l['tipo'] === 'ram') {
-                            $historico_ram[] = round((float)$l['valor'], 1);
+                            $ram_livre = (float)$l['valor'];
+                            if ($ram_total > 0) {
+                                $historico_ram[] = round((($ram_total - $ram_livre) / $ram_total) * 100, 1);
+                            } else {
+                                $historico_ram[] = 0;
+                            }
                         }
                     }
 

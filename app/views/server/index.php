@@ -59,7 +59,8 @@
                 <div class="mt-3">
                     <div class="d-flex justify-content-between mb-1 small">
                         <span><i class="fa-solid fa-memory me-1"></i> Memória RAM</span>
-                        <span><?= $srv['ram'] ?>% (<?= round($srv['ram']*32/100, 1) ?>GB / 32GB)</span>
+                        <span><?= round($srv['ram']) ?>% (<?= $srv['ram_usada'] ?>GB / <?= $srv['ram_total'] ?>GB)</span>
+
                     </div>
                     <div class="progress" style="height: 6px; background-color: #1e2638;">
                         <div class="progress-bar <?= $srv['ram'] > 80 ? 'bg-danger' : 'bg-info' ?>" style="width: <?= $srv['ram'] ?>%"></div>

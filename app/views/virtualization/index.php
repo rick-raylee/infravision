@@ -62,7 +62,8 @@
             </div>
             <div class="noc-card-body">
                 <?php
-                    $chartHosts = array_filter($hosts ?? [], fn($h) => $h['cpu_atual'] !== null);
+                    $chartHosts = array_values(array_filter($hosts ?? [], fn($h) => $h['cpu_atual'] !== null));
+
                 ?>
                 <?php if (empty($chartHosts)): ?>
                     <p class="text-secondary mb-0">Sem leituras de CPU para exibir gráfico.</p>

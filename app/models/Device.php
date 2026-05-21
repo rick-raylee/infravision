@@ -46,12 +46,29 @@ class Device {
                           ORDER BY l.data_leitura DESC LIMIT 1) as cpu_atual,
                          (SELECT l.valor FROM leituras l 
                           JOIN sensores s ON l.sensor_id = s.id 
-                          WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' 
-                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_atual
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' AND s.nome = 'RAM Livre (MB)' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_livre,
+                         (SELECT l.valor FROM leituras l 
+                          JOIN sensores s ON l.sensor_id = s.id 
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' AND s.nome = 'RAM Total (MB)' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_total
                   FROM dispositivos d
                   ORDER BY d.criado_em DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            $ram_livre = $row['ram_livre'] !== null ? (float)$row['ram_livre'] : null;
+            $ram_total = $row['ram_total'] !== null ? (float)$row['ram_total'] : null;
+
+            if ($ram_livre !== null && $ram_total !== null && $ram_total > 0) {
+                $row['ram_atual'] = (($ram_total - $ram_livre) / $ram_total) * 100;
+            } else {
+                $row['ram_atual'] = null;
+            }
+        }
+        return $rows;
     }
 }
+

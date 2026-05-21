@@ -18,8 +18,9 @@ class ComputerController {
                               ORDER BY l.data_leitura DESC LIMIT 1) as cpu,
                              (SELECT l.valor FROM leituras l 
                               JOIN sensores s ON l.sensor_id = s.id 
-                              WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' 
+                              WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' AND s.nome = 'RAM Livre (MB)' 
                               ORDER BY l.data_leitura DESC LIMIT 1) as ram
+
                       FROM dispositivos d
                       WHERE d.tipo = 'computador'
                       ORDER BY d.criado_em DESC";
