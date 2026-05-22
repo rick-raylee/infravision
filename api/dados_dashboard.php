@@ -45,7 +45,26 @@ $netIn  = array_map(function($r) { return round((float)$r['valor'], 3); }, $rows
 $netOut = array_map(function($r) { return round((float)$r['valor'], 3); }, $rowsOut);
 $labels = array_map(function($r) { return date('H:i', strtotime($r['data_leitura'])); }, $rowsIn);
 
-$interface_name = (!empty($rowsIn) && !empty($rowsIn[0]['sensor_nome'])) ? $rowsIn[0]['sensor_nome'] : 'Core Switch';
+$interface_name = 'Rede In (Mbps)';
+
+// Tentar buscar o nome do provedor (ISP)
+$cache_file = sys_get_temp_dir() . '/infravision_isp.txt';
+if (file_exists($cache_file) && (time() - filemtime($cache_file)) < 86400) {
+    $interface_name = file_get_contents($cache_file);
+} else {
+    $ch = curl_init('http://ip-api.com/json/');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+    $res = curl_exec($ch);
+    curl_close($ch);
+    if ($res) {
+        $json = json_decode($res, true);
+        if (isset($json['isp']) && !empty($json['isp'])) {
+            $interface_name = $json['isp'];
+            file_put_contents($cache_file, $interface_name);
+        }
+    }
+}
 
 // Fallback: agentes antigos sem rede_in/rede_out -> usa contagem de conexoes por momento
 if (empty($netIn)) {
