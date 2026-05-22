@@ -370,7 +370,11 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
         <div class="d-flex align-items-center gap-2">
             <label for="modelSelector" class="text-secondary mb-0 me-2" style="font-size: 0.85rem;"><i class="fa-solid fa-microchip text-primary me-1"></i> Modelo:</label>
             <select id="modelSelector" class="form-select form-select-sm bg-dark text-light border-secondary border-opacity-25" style="width: auto; min-width: 190px;">
-                <option value="">Carregando modelos locais...</option>
+                <?php foreach ($candidates as $model): ?>
+                    <option value="<?= htmlspecialchars($model['name']) ?>">
+                        <?= htmlspecialchars($model['name']) ?> (<?= htmlspecialchars($model['details']['parameter_size']) ?>)
+                    </option>
+                <?php endforeach; ?>
             </select>
         </div>
     </div>
@@ -386,8 +390,8 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
                     <div class="ai-status-indicator"></div>
                 </div>
                 <div class="ai-meta">
-                    <h5 id="aiModelTitle">Conectando...</h5>
-                    <span id="aiModelStatus"><i class="fa-solid fa-spinner fa-spin text-warning"></i> Buscando Ollama Local</span>
+                    <h5 id="aiModelTitle">Groq Cloud IA</h5>
+                    <span id="aiModelStatus"><i class="fa-solid fa-cloud text-success"></i> Nuvem Groq (Ultra-rápido)</span>
                 </div>
             </div>
 
@@ -407,8 +411,8 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
             <!-- Mensagem Inicial do Assistente -->
             <div class="chat-message assistant">
                 <div class="message-bubble">
-                    <p>Olá! Sou o seu assistente inteligente integrado ao NOC, rodando diretamente no seu hardware.</p>
-                    <p>Como posso ajudar você hoje? Você pode digitar uma pergunta diretamente ou usar as ferramentas de análise rápida no topo para verificar logs de auditoria e diagnosticar o status dos dispositivos conectados.</p>
+                    <p>Olá! Sou o seu assistente inteligente do NOC, agora rodando nos supercomputadores do <strong>Groq Cloud</strong>.</p>
+                    <p>Você não depende mais do seu hardware local. Posso correlacionar logs e fazer diagnósticos complexos em frações de segundo. Como posso ajudar?</p>
                 </div>
             </div>
         </div>
@@ -445,11 +449,9 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
         const btnAnalyzeDevices = document.getElementById("btnAnalyzeDevices");
  
         const chatEndpoint = "<?= $base_path ?>/ai-analyst/chat";
-        const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
 
         const modelSelector = document.getElementById("modelSelector");
         const chatTitle = document.getElementById("aiModelTitle");
-        const chatStatus = document.getElementById("aiModelStatus");
         const typingIndicatorText = document.querySelector("#typingIndicator > span");
 
         function updateUIForSelectedModel() {
@@ -457,62 +459,20 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
             const selectedText = modelSelector.options[modelSelector.selectedIndex].text;
             if (chatTitle) chatTitle.textContent = selectedText;
             if (typingIndicatorText) {
-                typingIndicatorText.textContent = `O modelo ${selectedText} está processando a requisição...`;
+                typingIndicatorText.textContent = `O modelo ${selectedText} está processando na nuvem Groq...`;
             }
         }
 
-        function loadLocalModels() {
-            fetch(`${OLLAMA_BASE_URL}/api/tags`)
-                .then(response => {
-                    if (!response.ok) throw new Error("CORS ou Ollama offline");
-                    return response.json();
-                })
-                .then(data => {
-                    modelSelector.innerHTML = "";
-                    if (!data.models || data.models.length === 0) {
-                        modelSelector.innerHTML = '<option value="">Nenhum modelo encontrado</option>';
-                        chatStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-warning"></i> Sem modelos';
-                        return;
-                    }
-
-                    data.models.forEach(model => {
-                        const name = model.name;
-                        let label = name.charAt(0).toUpperCase() + name.slice(1);
-                        if (name.includes("gemma2:2b")) label = "Gemma 2 2B (Rápido)";
-                        else if (name.includes("gemma4:e2b")) label = "Gemma 4 E2B (Inteligente)";
-                        else if (name.includes("gemma4")) label = "Gemma 4 (Local)";
-                        
-                        const option = document.createElement("option");
-                        option.value = name;
-                        option.textContent = label;
-                        modelSelector.appendChild(option);
-                    });
-
-                    chatStatus.innerHTML = '<i class="fa-solid fa-circle-check text-success"></i> Conectado Localmente';
-
-                    const savedModel = localStorage.getItem("preferred_model");
-                    if (savedModel && modelSelector.querySelector(`option[value="${savedModel}"]`)) {
-                        modelSelector.value = savedModel;
-                    }
-                    updateUIForSelectedModel();
-
-                    modelSelector.addEventListener("change", function() {
-                        localStorage.setItem("preferred_model", modelSelector.value);
-                        updateUIForSelectedModel();
-                    });
-                })
-                .catch(error => {
-                    modelSelector.innerHTML = '<option value="">Erro de Conexão Local</option>';
-                    chatStatus.innerHTML = '<i class="fa-solid fa-xmark text-danger"></i> Falha no Ollama (Requer OLLAMA_ORIGINS)';
-                    
-                    const sysMsgDiv = document.createElement("div");
-                    sysMsgDiv.className = "chat-message system";
-                    sysMsgDiv.innerHTML = `<div><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i><b>Ollama Inacessível</b><br>O sistema não conseguiu conectar ao Ollama no seu PC. Para usar a IA, configure a variável de ambiente no seu Windows: <b>OLLAMA_ORIGINS="*"</b> e reinicie o Ollama.</div>`;
-                    chatHistory.appendChild(sysMsgDiv);
-                });
+        const savedModel = localStorage.getItem("preferred_groq_model");
+        if (savedModel && modelSelector.querySelector(`option[value="${savedModel}"]`)) {
+            modelSelector.value = savedModel;
         }
+        updateUIForSelectedModel();
 
-        loadLocalModels();
+        modelSelector.addEventListener("change", function() {
+            localStorage.setItem("preferred_groq_model", modelSelector.value);
+            updateUIForSelectedModel();
+        });
 
         // Formatação simples de Markdown para HTML
         function parseMarkdown(text) {
@@ -627,7 +587,7 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
 
             const selectedModel = modelSelector ? modelSelector.value : "gemma2:2b";
 
-            // 1. Pedir o Prompt/Contexto para o Backend PHP (Nuvem)
+            // 1. Pedir a resposta para o Backend PHP (Nuvem Groq)
             fetch(chatEndpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -640,41 +600,15 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
             .then(response => response.json())
             .then(data => {
                 if (data.status !== "sucesso") {
-                    throw new Error(data.mensagem || "Erro ao buscar contexto.");
+                    throw new Error(data.mensagem || "Erro na comunicação com a API Groq.");
                 }
 
-                typingIndicatorText.textContent = `Enviando contexto para o Ollama local (${selectedModel})...`;
-
-                const numPredict = selectedModel.includes("gemma4") ? 1000 : 350;
-
-                // 2. Fazer requisição diretamente ao Ollama Local no PC do usuário
-                return fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        model: selectedModel,
-                        messages: [
-                            { role: "system", content: data.system_prompt },
-                            { role: "user", content: data.user_prompt }
-                        ],
-                        options: { num_predict: numPredict, temperature: 0.2 },
-                        stream: false
-                    })
-                });
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Erro de CORS ou Ollama está ocupado. Verifique OLLAMA_ORIGINS.");
-                }
-                return response.json();
-            })
-            .then(ollamaData => {
                 typingIndicator.style.display = "none";
                 const responseMsgDiv = document.createElement("div");
                 responseMsgDiv.className = "chat-message assistant";
                 responseMsgDiv.innerHTML = `
                     <div class="message-bubble">
-                        ${parseMarkdown(ollamaData.message.content)}
+                        ${parseMarkdown(data.resposta)}
                         <div class="message-time">${formatarHora()}</div>
                     </div>
                 `;

@@ -2,8 +2,17 @@
 
 class AiAnalystController {
 
+    public function getCandidateModels() {
+        return [
+            ['name' => 'gemma2-9b-it', 'details' => ['parameter_size' => '9B', 'family' => 'gemma2']],
+            ['name' => 'llama-3.1-8b-instant', 'details' => ['parameter_size' => '8B', 'family' => 'llama3.1']],
+            ['name' => 'mixtral-8x7b-32768', 'details' => ['parameter_size' => '8x7B', 'family' => 'mixtral']]
+        ];
+    }
+
     public function index() {
         $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
+        $candidates = $this->getCandidateModels();
         
         require 'app/views/layout/header.php';
         require 'app/views/ai-analyst/index.php';
@@ -114,17 +123,52 @@ class AiAnalystController {
             }
         }
 
-        $modelo_ativo = $input['modelo'] ?? 'gemma2:2b';
-        $is_gemma4 = (strpos(strtolower($modelo_ativo), 'gemma4') !== false);
+        $modelo_ativo = $input['modelo'] ?? 'gemma2-9b-it';
         $system_content = "Você é o AI Analyst, o assistente inteligente integrado ao painel de controle do InfraVision NOC. Você ajuda operadores de infraestrutura de TI a monitorá-lo, diagnosticar e resolver problemas de hardware, redes, servidores e segurança. Suas respostas devem ser precisas, altamente técnicas, objetivas e formatadas claramente em Markdown em português (PT-BR). Se houver códigos, logs ou passos de comando, formate-os em blocos de código adequados.";
-        if ($is_gemma4) {
-            $system_content .= " Limite seu pensamento (thinking) ao mínimo necessário para ser breve e vá direto ao ponto nas explicações.";
+
+        $api_key = getenv('GROQ_API_KEY');
+        if (empty($api_key)) {
+            echo json_encode(["status" => "erro", "mensagem" => "Chave GROQ_API_KEY não configurada no servidor."]);
+            exit;
         }
+
+        $data = [
+            "model" => $modelo_ativo,
+            "messages" => [
+                ["role" => "system", "content" => $system_content],
+                ["role" => "user", "content" => $prompt_final]
+            ],
+            "temperature" => 0.7,
+            "max_tokens" => 2048
+        ];
+
+        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $api_key,
+            'Content-Type: application/json'
+        ]);
+
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            echo json_encode(["status" => "erro", "mensagem" => "Erro de conexão com o Groq API: " . curl_error($ch)]);
+            exit;
+        }
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+        if (isset($result['error'])) {
+            echo json_encode(["status" => "erro", "mensagem" => "Erro da API Groq: " . ($result['error']['message'] ?? 'Erro desconhecido')]);
+            exit;
+        }
+
+        $resposta_ia = $result['choices'][0]['message']['content'] ?? 'Sem resposta da IA.';
 
         echo json_encode([
             "status" => "sucesso",
-            "system_prompt" => $system_content,
-            "user_prompt" => $prompt_final
+            "resposta" => $resposta_ia
         ], JSON_UNESCAPED_UNICODE);
     }
 
