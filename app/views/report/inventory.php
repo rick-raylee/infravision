@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Relatório de Infraestrutura - InfraVision</title>
+    <link rel="icon" href="<?= $base_path ?>/assets/img/logo.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         @media print {
