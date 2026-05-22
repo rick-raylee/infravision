@@ -393,13 +393,37 @@
                     var colorIn = getGaugeColor(pctIn);
                     chartIn.updateOptions({
                         colors: [colorIn.color],
-                        fill: { type: 'gradient', gradient: { gradientToColors: [colorIn.gradient] } }
+                        fill: { 
+                            type: 'gradient', 
+                            gradient: { 
+                                shade: 'dark',
+                                type: 'horizontal',
+                                shadeIntensity: 0.5,
+                                gradientToColors: [colorIn.gradient],
+                                inverseColors: true,
+                                opacityFrom: 1,
+                                opacityTo: 1,
+                                stops: [0, 100]
+                            } 
+                        }
                     });
 
                     var colorOut = getGaugeColor(pctOut);
                     chartOut.updateOptions({
                         colors: [colorOut.color],
-                        fill: { type: 'gradient', gradient: { gradientToColors: [colorOut.gradient] } }
+                        fill: { 
+                            type: 'gradient', 
+                            gradient: { 
+                                shade: 'dark',
+                                type: 'horizontal',
+                                shadeIntensity: 0.5,
+                                gradientToColors: [colorOut.gradient],
+                                inverseColors: true,
+                                opacityFrom: 1,
+                                opacityTo: 1,
+                                stops: [0, 100]
+                            } 
+                        }
                     });
                     
                     // 5. Exibir pico e escalas nas legendas
