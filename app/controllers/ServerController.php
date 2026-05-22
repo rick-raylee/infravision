@@ -20,7 +20,15 @@ class ServerController {
                          (SELECT l.valor FROM leituras l 
                           JOIN sensores s ON l.sensor_id = s.id 
                           WHERE s.dispositivo_id = d.id AND s.tipo = 'ram' AND s.nome = 'RAM Total (MB)' 
-                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_total
+                          ORDER BY l.data_leitura DESC LIMIT 1) as ram_total,
+                         (SELECT l.valor FROM leituras l 
+                          JOIN sensores s ON l.sensor_id = s.id 
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'disco' AND s.nome LIKE 'Disco Livre%' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as disco_livre,
+                         (SELECT l.valor FROM leituras l 
+                          JOIN sensores s ON l.sensor_id = s.id 
+                          WHERE s.dispositivo_id = d.id AND s.tipo = 'disco' AND s.nome LIKE 'Disco Total%' 
+                          ORDER BY l.data_leitura DESC LIMIT 1) as disco_total
                   FROM dispositivos d
                   WHERE d.tipo IN ('servidor_windows', 'servidor_linux')
                   ORDER BY d.criado_em DESC";
@@ -39,16 +47,27 @@ class ServerController {
             $ram_total_gb = $ram_total !== null ? round($ram_total / 1024, 1) : 0;
             $ram_usada_gb = ($ram_total !== null && $ram_livre !== null) ? round(($ram_total - $ram_livre) / 1024, 1) : 0;
 
+            $disco_livre = $s['disco_livre'] !== null ? (float)$s['disco_livre'] : null;
+            $disco_total = $s['disco_total'] !== null ? (float)$s['disco_total'] : null;
+            $disco_percent = ($disco_livre !== null && $disco_total !== null && $disco_total > 0)
+                ? (($disco_total - $disco_livre) / $disco_total) * 100
+                : null;
+            $disco_livre_gb  = $disco_livre !== null ? round($disco_livre, 1) : null;
+            $disco_total_gb  = $disco_total !== null ? round($disco_total, 1) : null;
+
             $servidores[] = [
-                'id' => $s['id'],
-                'nome' => $s['hostname'],
-                'ip' => $s['ip'],
-                'so' => $s['tipo'] === 'servidor_linux' ? 'Linux Server' : 'Windows Server',
-                'status' => $s['status'],
-                'cpu' => $s['cpu_atual'] !== null ? round($s['cpu_atual']) : 0,
-                'ram' => $ram_percent,
-                'ram_total' => $ram_total_gb,
-                'ram_usada' => $ram_usada_gb
+                'id'          => $s['id'],
+                'nome'        => $s['hostname'],
+                'ip'          => $s['ip'],
+                'so'          => $s['tipo'] === 'servidor_linux' ? 'Linux Server' : 'Windows Server',
+                'status'      => $s['status'],
+                'cpu'         => $s['cpu_atual'] !== null ? round($s['cpu_atual']) : 0,
+                'ram'         => $ram_percent,
+                'ram_total'   => $ram_total_gb,
+                'ram_usada'   => $ram_usada_gb,
+                'disco_percent' => $disco_percent,
+                'disco_livre'   => $disco_livre_gb,
+                'disco_total'   => $disco_total_gb,
             ];
         }
 

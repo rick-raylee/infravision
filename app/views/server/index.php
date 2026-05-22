@@ -68,16 +68,28 @@
                 </div>
 
                 <div class="mt-3">
+                    <?php if ($srv['disco_percent'] !== null): ?>
+                    <?php $dp = round($srv['disco_percent']); $dpColor = $dp >= 90 ? 'bg-danger' : ($dp >= 75 ? 'bg-warning' : 'bg-success'); $dpText = $dp >= 90 ? 'text-danger' : ($dp >= 75 ? 'text-warning' : 'text-success'); ?>
                     <div class="d-flex justify-content-between mb-1 small">
-                        <span><i class="fa-solid fa-hard-drive me-1"></i> Disco HD (C:)</span>
-                        <span>75% (1.2TB / 1.6TB)</span>
+                        <span><i class="fa-solid fa-hard-drive me-1"></i> Disco (C:)</span>
+                        <span class="<?= $dpText ?>"><?= $dp ?>% (<?= $srv['disco_total'] - $srv['disco_livre'] ?> / <?= $srv['disco_total'] ?> GB)</span>
                     </div>
                     <div class="progress" style="height: 6px; background-color: #1e2638;">
-                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                        <div class="progress-bar <?= $dpColor ?>" style="width: <?= $dp ?>%"></div>
                     </div>
                     <div class="text-secondary mt-1" style="font-size: 0.7rem;">
-                        <i class="fa-solid fa-circle-check text-success me-1"></i> Saúde: Saudável
+                        <i class="fa-solid fa-<?= $dp >= 90 ? 'triangle-exclamation text-danger' : ($dp >= 75 ? 'clock text-warning' : 'circle-check text-success') ?> me-1"></i>
+                        <?= $srv['disco_livre'] ?> GB livres de <?= $srv['disco_total'] ?> GB
                     </div>
+                    <?php else: ?>
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span><i class="fa-solid fa-hard-drive me-1"></i> Disco</span>
+                        <span class="text-secondary">Sem dados</span>
+                    </div>
+                    <div class="progress" style="height: 6px; background-color: #1e2638;">
+                        <div class="progress-bar bg-secondary" style="width: 0%"></div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
