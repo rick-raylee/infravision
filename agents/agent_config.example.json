@@ -1,6 +1,0 @@
-{
-  "ApiUrl": "https://seu-servidor/api/receber_agente.php",
-  "AuthToken": "SEU_TOKEN",
-  "Intervalo": 60,
-  "MonitorNobreak": false
-}

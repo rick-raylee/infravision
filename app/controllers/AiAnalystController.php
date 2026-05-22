@@ -4,9 +4,9 @@ class AiAnalystController {
 
     public function getCandidateModels() {
         return [
-            ['name' => 'gemma2-9b-it', 'details' => ['parameter_size' => '9B', 'family' => 'gemma2']],
-            ['name' => 'llama-3.1-8b-instant', 'details' => ['parameter_size' => '8B', 'family' => 'llama3.1']],
-            ['name' => 'mixtral-8x7b-32768', 'details' => ['parameter_size' => '8x7B', 'family' => 'mixtral']]
+            ['name' => 'llama-3.1-8b-instant', 'details' => ['parameter_size' => '8B', 'family' => 'llama-3.1']],
+            ['name' => 'meta-llama/llama-4-scout-17b-16e-instruct', 'details' => ['parameter_size' => '17B', 'family' => 'llama-4']],
+            ['name' => 'llama-3.3-70b-versatile', 'details' => ['parameter_size' => '70B', 'family' => 'llama-3.3']]
         ];
     }
 
@@ -123,7 +123,7 @@ class AiAnalystController {
             }
         }
 
-        $modelo_ativo = $input['modelo'] ?? 'gemma2-9b-it';
+        $modelo_ativo = $input['modelo'] ?? 'llama-3.1-8b-instant';
         $system_content = "Você é o AI Analyst, o assistente inteligente integrado ao painel de controle do InfraVision NOC. Você ajuda operadores de infraestrutura de TI a monitorá-lo, diagnosticar e resolver problemas de hardware, redes, servidores e segurança. Suas respostas devem ser precisas, altamente técnicas, objetivas e formatadas claramente em Markdown em português (PT-BR). Se houver códigos, logs ou passos de comando, formate-os em blocos de código adequados.";
 
         $api_key = getenv('GROQ_API_KEY');
