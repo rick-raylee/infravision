@@ -16,8 +16,12 @@ if (function_exists('apache_request_headers')) {
     // }
 }
 
-// Ler o JSON enviado pelo agente (via POST)
-$dados_json = file_get_contents("php://input");
+// Ler o JSON enviado pelo agente (via POST ou CLI stdin)
+if (php_sapi_name() === 'cli') {
+    $dados_json = file_get_contents("php://stdin");
+} else {
+    $dados_json = file_get_contents("php://input");
+}
 $dados = json_decode($dados_json, true);
 
 if (!$dados) {
@@ -142,7 +146,11 @@ try {
     foreach ($discos as $disco) {
         $letra = $disco['letra'] ?? 'C:';
         $livre = $disco['livre_gb'] ?? 0;
+        $tamanho = $disco['tamanho_gb'] ?? 0;
         $sensoresParaSalvar[] = ['nome' => "Disco Livre ($letra) GB", 'tipo' => 'disco', 'valor' => $livre];
+        if ($tamanho > 0) {
+            $sensoresParaSalvar[] = ['nome' => "Disco Total ($letra) GB", 'tipo' => 'disco', 'valor' => $tamanho];
+        }
     }
 
     // Adicionar sensores do nobreak/bateria se existirem

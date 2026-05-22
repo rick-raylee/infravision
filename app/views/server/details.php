@@ -65,7 +65,11 @@
                 <?php else: ?>
                     <div class="row g-4">
                         <?php foreach ($discos as $disco): ?>
-                            <?php $uso = min(100, max(0, (float)$disco['valor'])); ?>
+                            <?php 
+                            $uso = $disco['uso_porcentagem']; 
+                            $total = $disco['total'];
+                            $livre = $disco['livre'];
+                            ?>
                             <div class="col-12 col-md-4">
                                 <div class="p-3 border border-secondary rounded bg-dark bg-opacity-25">
                                     <div class="d-flex justify-content-between mb-2">
@@ -74,6 +78,15 @@
                                     </div>
                                     <div class="progress mb-2" style="height: 10px;">
                                         <div class="progress-bar bg-primary" style="width: <?= $uso ?>%"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-secondary">
+                                        <?php if ($total > 0): ?>
+                                            <span><?= round($livre, 1) ?> GB livres de <?= round($total, 1) ?> GB</span>
+                                            <span><?= round($total - $livre, 1) ?> GB usados</span>
+                                        <?php else: ?>
+                                            <span><?= round($livre, 1) ?> GB livres</span>
+                                            <span>Total desc.</span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>

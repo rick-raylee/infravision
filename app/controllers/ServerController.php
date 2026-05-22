@@ -117,7 +117,53 @@ class ServerController {
                                                      SELECT MAX(l2.data_leitura) FROM leituras l2 WHERE l2.sensor_id = s.id
                                                  )");
                     $stmtDisco->execute([':id' => $servidor['id']]);
-                    $discos = $stmtDisco->fetchAll(PDO::FETCH_ASSOC);
+                    $raw_discos = $stmtDisco->fetchAll(PDO::FETCH_ASSOC);
+
+                    $discos_agrupados = [];
+                    foreach ($raw_discos as $rd) {
+                        if (preg_match('/Disco (Livre|Total) \(([^)]+)\) GB/i', $rd['nome'], $matches)) {
+                            $tipo_campo = strtolower($matches[1]); // 'livre' ou 'total'
+                            $letra = $matches[2]; // 'C:', etc.
+                            if (!isset($discos_agrupados[$letra])) {
+                                $discos_agrupados[$letra] = [
+                                    'letra' => $letra,
+                                    'total' => null,
+                                    'livre' => null
+                                ];
+                            }
+                            $discos_agrupados[$letra][$tipo_campo] = (float)$rd['valor'];
+                        } else {
+                            $discos_agrupados[$rd['nome']] = [
+                                'letra' => $rd['nome'],
+                                'total' => null,
+                                'livre' => (float)$rd['valor']
+                            ];
+                        }
+                    }
+
+                    $discos = [];
+                    foreach ($discos_agrupados as $key => $info) {
+                        $total = $info['total'];
+                        $livre = $info['livre'];
+                        $letra = $info['letra'];
+
+                        if ($total !== null && $total > 0 && $livre !== null) {
+                            $usado = $total - $livre;
+                            $porcentagem_uso = ($usado / $total) * 100;
+                        } else {
+                            $usado = 0;
+                            $porcentagem_uso = 0;
+                        }
+
+                        $discos[] = [
+                            'letra' => $letra,
+                            'nome' => (strpos($letra, 'Disco') === 0) ? $letra : "Disco ($letra)",
+                            'total' => $total,
+                            'livre' => $livre,
+                            'usado' => $usado,
+                            'uso_porcentagem' => min(100, max(0, $porcentagem_uso))
+                        ];
+                    }
                 }
             }
         }
