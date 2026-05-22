@@ -3,6 +3,8 @@ session_start();
 
 // Carregar Configurações
 require_once 'config/database.php';
+$database = new Database(); // Carrega variáveis de ambiente globais do .env
+
 
 // Roteador super simples para o MVC
 $request = $_SERVER['REQUEST_URI'];
@@ -184,7 +186,11 @@ switch ($path) {
     case '/settings':
         require 'app/controllers/SettingsController.php';
         $controller = new SettingsController();
-        $controller->index();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $controller->save();
+        } else {
+            $controller->index();
+        }
         break;
 
     case '/logcenter':
@@ -192,6 +198,19 @@ switch ($path) {
         $controller = new LogCenterController();
         $controller->index();
         break;
+
+    case '/ai-analyst':
+        require 'app/controllers/AiAnalystController.php';
+        $controller = new AiAnalystController();
+        $controller->index();
+        break;
+
+    case '/ai-analyst/chat':
+        require 'app/controllers/AiAnalystController.php';
+        $controller = new AiAnalystController();
+        $controller->chat();
+        break;
+
 
     case '/discovery':
         require 'app/controllers/DiscoveryController.php';

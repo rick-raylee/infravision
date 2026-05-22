@@ -214,6 +214,9 @@ try {
         <a href="<?= $base_path ?>/logcenter" class="sidebar-link <?= $current_path === '/logcenter' ? 'active' : '' ?>">
             <i class="fa-solid fa-terminal"></i> Central de Logs
         </a>
+        <a href="<?= $base_path ?>/ai-analyst" class="sidebar-link <?= $current_path === '/ai-analyst' ? 'active' : '' ?>">
+            <i class="fa-solid fa-brain text-info"></i> Assistente de IA
+        </a>
         <a href="<?= $base_path ?>/network" class="sidebar-link <?= $current_path === '/network' ? 'active' : '' ?>">
             <i class="fa-solid fa-shield-halved"></i> Rede & Firewall
         </a>
