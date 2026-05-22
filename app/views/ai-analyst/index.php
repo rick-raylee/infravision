@@ -370,20 +370,7 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
         <div class="d-flex align-items-center gap-2">
             <label for="modelSelector" class="text-secondary mb-0 me-2" style="font-size: 0.85rem;"><i class="fa-solid fa-microchip text-primary me-1"></i> Modelo:</label>
             <select id="modelSelector" class="form-select form-select-sm bg-dark text-light border-secondary border-opacity-25" style="width: auto; min-width: 190px;">
-                <?php foreach ($candidates as $candidate): 
-                    $label = 'Gemma 4 (Local)';
-                    if ($candidate === 'gemma2:2b') {
-                        $label = 'Gemma 2 2B (Rápido)';
-                    } elseif ($candidate === 'gemma4:e2b') {
-                        $label = 'Gemma 4 E2B (Inteligente)';
-                    } elseif (strpos($candidate, 'gemma4') !== false) {
-                        $label = 'Gemma 4 (Local)';
-                    } else {
-                        $label = ucfirst($candidate);
-                    }
-                ?>
-                    <option value="<?= htmlspecialchars($candidate) ?>"><?= htmlspecialchars($label) ?></option>
-                <?php endforeach; ?>
+                <option value="">Carregando modelos locais...</option>
             </select>
         </div>
     </div>
@@ -399,8 +386,8 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
                     <div class="ai-status-indicator"></div>
                 </div>
                 <div class="ai-meta">
-                    <h5><?= htmlspecialchars($modelo_exibicao) ?></h5>
-                    <span><i class="fa-solid fa-circle-check text-success"></i> Pronto para analisar</span>
+                    <h5 id="aiModelTitle">Conectando...</h5>
+                    <span id="aiModelStatus"><i class="fa-solid fa-spinner fa-spin text-warning"></i> Buscando Ollama Local</span>
                 </div>
             </div>
 
@@ -420,7 +407,7 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
             <!-- Mensagem Inicial do Assistente -->
             <div class="chat-message assistant">
                 <div class="message-bubble">
-                    <p>Olá! Sou o **<?= htmlspecialchars($modelo_exibicao) ?>**, o assistente inteligente integrado ao seu NOC.</p>
+                    <p>Olá! Sou o seu assistente inteligente integrado ao NOC, rodando diretamente no seu hardware.</p>
                     <p>Como posso ajudar você hoje? Você pode digitar uma pergunta diretamente ou usar as ferramentas de análise rápida no topo para verificar logs de auditoria e diagnosticar o status dos dispositivos conectados.</p>
                 </div>
             </div>
@@ -435,7 +422,7 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
                     <span></span>
                     <span></span>
                 </div>
-                <span>O modelo <?= htmlspecialchars($modelo_exibicao) ?> está processando a requisição e gerando o diagnóstico...</span>
+                <span>Processando a requisição e gerando o diagnóstico...</span>
             </div>
 
             <div class="chat-input-container mt-2">
@@ -458,33 +445,74 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
         const btnAnalyzeDevices = document.getElementById("btnAnalyzeDevices");
  
         const chatEndpoint = "<?= $base_path ?>/ai-analyst/chat";
+        const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
 
         const modelSelector = document.getElementById("modelSelector");
-        const chatTitle = document.querySelector(".ai-meta h5");
+        const chatTitle = document.getElementById("aiModelTitle");
+        const chatStatus = document.getElementById("aiModelStatus");
         const typingIndicatorText = document.querySelector("#typingIndicator > span");
 
         function updateUIForSelectedModel() {
-            if (!modelSelector) return;
+            if (!modelSelector || modelSelector.options.length === 0) return;
             const selectedText = modelSelector.options[modelSelector.selectedIndex].text;
             if (chatTitle) chatTitle.textContent = selectedText;
             if (typingIndicatorText) {
-                typingIndicatorText.textContent = `O modelo ${selectedText} está processando a requisição e gerando o diagnóstico...`;
+                typingIndicatorText.textContent = `O modelo ${selectedText} está processando a requisição...`;
             }
         }
 
-        if (modelSelector) {
-            // Carregar do localStorage se existir
-            const savedModel = localStorage.getItem("preferred_model");
-            if (savedModel && modelSelector.querySelector(`option[value="${savedModel}"]`)) {
-                modelSelector.value = savedModel;
-            }
-            updateUIForSelectedModel();
+        function loadLocalModels() {
+            fetch(`${OLLAMA_BASE_URL}/api/tags`)
+                .then(response => {
+                    if (!response.ok) throw new Error("CORS ou Ollama offline");
+                    return response.json();
+                })
+                .then(data => {
+                    modelSelector.innerHTML = "";
+                    if (!data.models || data.models.length === 0) {
+                        modelSelector.innerHTML = '<option value="">Nenhum modelo encontrado</option>';
+                        chatStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-warning"></i> Sem modelos';
+                        return;
+                    }
 
-            modelSelector.addEventListener("change", function() {
-                localStorage.setItem("preferred_model", modelSelector.value);
-                updateUIForSelectedModel();
-            });
+                    data.models.forEach(model => {
+                        const name = model.name;
+                        let label = name.charAt(0).toUpperCase() + name.slice(1);
+                        if (name.includes("gemma2:2b")) label = "Gemma 2 2B (Rápido)";
+                        else if (name.includes("gemma4:e2b")) label = "Gemma 4 E2B (Inteligente)";
+                        else if (name.includes("gemma4")) label = "Gemma 4 (Local)";
+                        
+                        const option = document.createElement("option");
+                        option.value = name;
+                        option.textContent = label;
+                        modelSelector.appendChild(option);
+                    });
+
+                    chatStatus.innerHTML = '<i class="fa-solid fa-circle-check text-success"></i> Conectado Localmente';
+
+                    const savedModel = localStorage.getItem("preferred_model");
+                    if (savedModel && modelSelector.querySelector(`option[value="${savedModel}"]`)) {
+                        modelSelector.value = savedModel;
+                    }
+                    updateUIForSelectedModel();
+
+                    modelSelector.addEventListener("change", function() {
+                        localStorage.setItem("preferred_model", modelSelector.value);
+                        updateUIForSelectedModel();
+                    });
+                })
+                .catch(error => {
+                    modelSelector.innerHTML = '<option value="">Erro de Conexão Local</option>';
+                    chatStatus.innerHTML = '<i class="fa-solid fa-xmark text-danger"></i> Falha no Ollama (Requer OLLAMA_ORIGINS)';
+                    
+                    const sysMsgDiv = document.createElement("div");
+                    sysMsgDiv.className = "chat-message system";
+                    sysMsgDiv.innerHTML = `<div><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i><b>Ollama Inacessível</b><br>O sistema não conseguiu conectar ao Ollama no seu PC. Para usar a IA, configure a variável de ambiente no seu Windows: <b>OLLAMA_ORIGINS="*"</b> e reinicie o Ollama.</div>`;
+                    chatHistory.appendChild(sysMsgDiv);
+                });
         }
+
+        loadLocalModels();
 
         // Formatação simples de Markdown para HTML
         function parseMarkdown(text) {
@@ -500,19 +528,11 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
                 return `<pre class="noc-code-block"><code class="language-${lang}">${code.trim()}</code></pre>`;
             });
 
-            // Inline code
             escaped = escaped.replace(/`([^`]+)`/g, '<code class="noc-inline-code">$1</code>');
-
-            // Bold
             escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-            // Bullet lists
             escaped = escaped.replace(/^\s*-\s+(.+)$/gm, '<li>$1</li>');
-            
-            // Wrap lists
             escaped = escaped.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
 
-            // Paragraphs split
             let lines = escaped.split(/\n\n+/);
             let formatted = lines.map(line => {
                 if (line.trim().startsWith('<pre') || line.trim().startsWith('<ul') || line.trim().startsWith('<li>')) {
@@ -524,11 +544,9 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
             return formatted;
         }
 
-        // Formatar e exibir as mensagens iniciais na timeline
         function formatExistingMessages() {
             const bubbles = chatHistory.querySelectorAll(".message-bubble");
             bubbles.forEach(bubble => {
-                // Se a mensagem não contiver HTML processado ainda
                 if (!bubble.innerHTML.includes("<p>") && !bubble.innerHTML.includes("<strong>")) {
                     bubble.innerHTML = parseMarkdown(bubble.innerText);
                 }
@@ -536,15 +554,12 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
         }
         formatExistingMessages();
 
-        // Controlar ativação do botão enviar
         chatInput.addEventListener("input", function() {
             btnSend.disabled = chatInput.value.trim() === "";
-            // Auto resize do textarea
             chatInput.style.height = "auto";
             chatInput.style.height = (chatInput.scrollHeight) + "px";
         });
 
-        // Enviar mensagem ao apertar Enter
         chatInput.addEventListener("keydown", function(e) {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -578,15 +593,12 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
         }
 
         function enviarMensagem(mensagemText, tipoAnalise = "chat") {
-            // Desativar inputs e botões durante o processamento
             chatInput.disabled = true;
             btnSend.disabled = true;
             btnAnalyzeLogs.disabled = true;
             btnAnalyzeDevices.disabled = true;
 
-            // Se for chat livre ou se o usuário digitou algo com o atalho
             if (mensagemText !== "") {
-                // Adicionar mensagem do operador na tela
                 const userMsgDiv = document.createElement("div");
                 userMsgDiv.className = "chat-message operator";
                 userMsgDiv.innerHTML = `
@@ -597,36 +609,28 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
                 `;
                 chatHistory.appendChild(userMsgDiv);
             } else if (tipoAnalise === "logs") {
-                // Adicionar mensagem de log analise na tela
                 const sysMsgDiv = document.createElement("div");
                 sysMsgDiv.className = "chat-message system";
-                sysMsgDiv.innerHTML = `<div><i class="fa-solid fa-spinner fa-spin me-2"></i>Solicitada Correlação e Análise dos Logs do Sistema...</div>`;
+                sysMsgDiv.innerHTML = `<div><i class="fa-solid fa-spinner fa-spin me-2"></i>Consultando Logs do Sistema...</div>`;
                 chatHistory.appendChild(sysMsgDiv);
             } else if (tipoAnalise === "dispositivos") {
-                // Adicionar mensagem de dispositivos na tela
                 const sysMsgDiv = document.createElement("div");
                 sysMsgDiv.className = "chat-message system";
-                sysMsgDiv.innerHTML = `<div><i class="fa-solid fa-spinner fa-spin me-2"></i>Solicitado Diagnóstico de Saúde dos Dispositivos...</div>`;
+                sysMsgDiv.innerHTML = `<div><i class="fa-solid fa-spinner fa-spin me-2"></i>Consultando Métricas dos Dispositivos...</div>`;
                 chatHistory.appendChild(sysMsgDiv);
             }
 
             chatInput.value = "";
             chatInput.style.height = "auto";
             scrollParaBaixo();
-
-            // Exibir indicador de digitação
             typingIndicator.style.display = "flex";
-            scrollParaBaixo();
 
-            // Obter modelo selecionado
-            const selectedModel = modelSelector ? modelSelector.value : "";
+            const selectedModel = modelSelector ? modelSelector.value : "gemma2:2b";
 
-            // Enviar requisição AJAX para o backend
+            // 1. Pedir o Prompt/Contexto para o Backend PHP (Nuvem)
             fetch(chatEndpoint, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     mensagem: mensagemText,
                     tipo_analise: tipoAnalise,
@@ -635,63 +639,55 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
             })
             .then(response => response.json())
             .then(data => {
-                // Esconder indicador de digitação
-                typingIndicator.style.display = "none";
-
-                const responseMsgDiv = document.createElement("div");
-                responseMsgDiv.className = "chat-message assistant";
-
-                if (data.status === "sucesso") {
-                    // Atualizar dinamicamente o modelo exibido na tela, caso tenha ocorrido fallback automático
-                    if (data.modelo_usado && modelSelector) {
-                        let matchedValue = null;
-                        for (let i = 0; i < modelSelector.options.length; i++) {
-                            const opt = modelSelector.options[i];
-                            if (data.modelo_usado.toLowerCase().includes("2b") && opt.value.includes("2b")) {
-                                matchedValue = opt.value;
-                            } else if (data.modelo_usado.toLowerCase().includes("gemma 4") && opt.value.includes("gemma4")) {
-                                matchedValue = opt.value;
-                            }
-                        }
-                        if (matchedValue && modelSelector.value !== matchedValue) {
-                            modelSelector.value = matchedValue;
-                            updateUIForSelectedModel();
-                            
-                            // Mostrar uma pequena notificação do sistema informando sobre o fallback silencioso
-                            const fallbackMsgDiv = document.createElement("div");
-                            fallbackMsgDiv.className = "chat-message system";
-                            fallbackMsgDiv.innerHTML = `<div><i class="fa-solid fa-arrows-spin me-2"></i>Modelo alternativo acionado para evitar lentidão ou falhas.</div>`;
-                            chatHistory.appendChild(fallbackMsgDiv);
-                        }
-                    }
-
-                    responseMsgDiv.innerHTML = `
-                        <div class="message-bubble">
-                            ${parseMarkdown(data.resposta)}
-                            <div class="message-time">${formatarHora()}</div>
-                        </div>
-                    `;
-                } else {
-                    responseMsgDiv.innerHTML = `
-                        <div class="message-bubble border-danger text-danger bg-danger bg-opacity-10">
-                            <i class="fa-solid fa-circle-exclamation me-2"></i><strong>Erro:</strong> ${data.mensagem}
-                            ${data.erro_detalhado ? `<br><small class="text-secondary">Detalhes: ${data.erro_detalhado}</small>` : ''}
-                            <div class="message-time text-danger">${formatarHora()}</div>
-                        </div>
-                    `;
+                if (data.status !== "sucesso") {
+                    throw new Error(data.mensagem || "Erro ao buscar contexto.");
                 }
 
+                typingIndicatorText.textContent = `Enviando contexto para o Ollama local (${selectedModel})...`;
+
+                const numPredict = selectedModel.includes("gemma4") ? 1000 : 350;
+
+                // 2. Fazer requisição diretamente ao Ollama Local no PC do usuário
+                return fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: selectedModel,
+                        messages: [
+                            { role: "system", content: data.system_prompt },
+                            { role: "user", content: data.user_prompt }
+                        ],
+                        options: { num_predict: numPredict, temperature: 0.2 },
+                        stream: false
+                    })
+                });
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erro de CORS ou Ollama está ocupado. Verifique OLLAMA_ORIGINS.");
+                }
+                return response.json();
+            })
+            .then(ollamaData => {
+                typingIndicator.style.display = "none";
+                const responseMsgDiv = document.createElement("div");
+                responseMsgDiv.className = "chat-message assistant";
+                responseMsgDiv.innerHTML = `
+                    <div class="message-bubble">
+                        ${parseMarkdown(ollamaData.message.content)}
+                        <div class="message-time">${formatarHora()}</div>
+                    </div>
+                `;
                 chatHistory.appendChild(responseMsgDiv);
                 scrollParaBaixo();
             })
             .catch(error => {
                 typingIndicator.style.display = "none";
-
                 const errorMsgDiv = document.createElement("div");
                 errorMsgDiv.className = "chat-message assistant";
                 errorMsgDiv.innerHTML = `
                     <div class="message-bubble border-danger text-danger bg-danger bg-opacity-10">
-                        <i class="fa-solid fa-triangle-exclamation me-2"></i><strong>Falha de Conexão:</strong> Erro ao comunicar com a controladora do NOC.
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i><strong>Falha:</strong> ${error.message}
                         <div class="message-time text-danger">${formatarHora()}</div>
                     </div>
                 `;
@@ -699,7 +695,6 @@ $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_
                 scrollParaBaixo();
             })
             .finally(() => {
-                // Re-habilitar inputs
                 chatInput.disabled = false;
                 chatInput.focus();
                 btnAnalyzeLogs.disabled = false;
