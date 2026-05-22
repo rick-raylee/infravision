@@ -23,7 +23,13 @@ if (-not (Test-Path $CSC)) {
     exit 1
 }
 
-& $CSC /out:$Output /r:$Refs $Source 2>&1
+$IconParam = ""
+if (Test-Path "icon.ico") {
+    $IconParam = "/win32icon:icon.ico"
+    Write-Host "Usando icone: icon.ico" -ForegroundColor Yellow
+}
+
+& $CSC $IconParam /out:$Output /r:$Refs $Source 2>&1
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
