@@ -3,7 +3,7 @@
 class AiAnalystController {
 
     private function getCandidateModels() {
-        $ollama_url = getenv('OLLAMA_API_URL') ?: 'http://localhost:11434';
+        $ollama_url = getenv('OLLAMA_API_URL') ?: 'http://127.0.0.1:11434';
         $ch_models = curl_init(rtrim($ollama_url, '/') . '/api/tags');
         curl_setopt($ch_models, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch_models, CURLOPT_TIMEOUT, 3);
@@ -215,7 +215,7 @@ class AiAnalystController {
             }
 
             // Comunicação com a API do Ollama Local
-            $ollama_url = getenv('OLLAMA_API_URL') ?: 'http://localhost:11434';
+            $ollama_url = getenv('OLLAMA_API_URL') ?: 'http://127.0.0.1:11434';
             $url = rtrim($ollama_url, '/') . '/api/chat';
             $payload = [
                 "model" => $modelo_ativo,

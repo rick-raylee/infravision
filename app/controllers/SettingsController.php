@@ -11,7 +11,7 @@ class SettingsController {
         $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
         
         // Carregar modelos instalados do Ollama para o dropdown
-        $ollama_url = getenv('OLLAMA_API_URL') ?: 'http://localhost:11434';
+        $ollama_url = getenv('OLLAMA_API_URL') ?: 'http://127.0.0.1:11434';
         $ch_models = curl_init($ollama_url . '/api/tags');
         curl_setopt($ch_models, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch_models, CURLOPT_TIMEOUT, 3);

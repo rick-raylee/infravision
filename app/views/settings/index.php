@@ -143,7 +143,7 @@
                 <div class="noc-card-body">
                     <div class="mb-3">
                         <label class="form-label text-secondary small">URL da API do Ollama</label>
-                        <input type="text" name="ollama_api_url" class="form-control bg-dark border-secondary text-light" placeholder="http://localhost:11434" value="<?= htmlspecialchars(getenv('OLLAMA_API_URL') ?: 'http://localhost:11434') ?>">
+                        <input type="text" name="ollama_api_url" class="form-control bg-dark border-secondary text-light" placeholder="http://127.0.0.1:11434" value="<?= htmlspecialchars(getenv('OLLAMA_API_URL') ?: 'http://127.0.0.1:11434') ?>">
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-secondary small">Modelo Gemma Ativo</label>
