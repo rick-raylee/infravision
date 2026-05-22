@@ -263,17 +263,7 @@
             }
         },
         fill: {
-            type: 'gradient',
-            gradient: {
-                shade: 'dark',
-                type: 'horizontal',
-                shadeIntensity: 0.5,
-                gradientToColors: ['#60a5fa'],
-                inverseColors: true,
-                opacityFrom: 1,
-                opacityTo: 1,
-                stops: [0, 100]
-            }
+            type: 'solid'
         },
         colors: ['#3b82f6'],
         labels: ['Entrada']
@@ -310,17 +300,7 @@
             }
         },
         fill: {
-            type: 'gradient',
-            gradient: {
-                shade: 'dark',
-                type: 'horizontal',
-                shadeIntensity: 0.5,
-                gradientToColors: ['#34d399'],
-                inverseColors: true,
-                opacityFrom: 1,
-                opacityTo: 1,
-                stops: [0, 100]
-            }
+            type: 'solid'
         },
         colors: ['#10b981'],
         labels: ['Saída']
@@ -391,40 +371,10 @@
                     }
 
                     var colorIn = getGaugeColor(pctIn);
-                    chartIn.updateOptions({
-                        colors: [colorIn.color],
-                        fill: { 
-                            type: 'gradient', 
-                            gradient: { 
-                                shade: 'dark',
-                                type: 'horizontal',
-                                shadeIntensity: 0.5,
-                                gradientToColors: [colorIn.gradient],
-                                inverseColors: true,
-                                opacityFrom: 1,
-                                opacityTo: 1,
-                                stops: [0, 100]
-                            } 
-                        }
-                    });
+                    chartIn.updateOptions({ colors: [colorIn.color] });
 
                     var colorOut = getGaugeColor(pctOut);
-                    chartOut.updateOptions({
-                        colors: [colorOut.color],
-                        fill: { 
-                            type: 'gradient', 
-                            gradient: { 
-                                shade: 'dark',
-                                type: 'horizontal',
-                                shadeIntensity: 0.5,
-                                gradientToColors: [colorOut.gradient],
-                                inverseColors: true,
-                                opacityFrom: 1,
-                                opacityTo: 1,
-                                stops: [0, 100]
-                            } 
-                        }
-                    });
+                    chartOut.updateOptions({ colors: [colorOut.color] });
                     
                     // 5. Exibir pico e escalas nas legendas
                     var peakIn = Math.max(...data.rede.in);
