@@ -213,6 +213,8 @@ namespace InfraVisionAgent
             }
             catch { }
 
+            bool modoForcado = false;
+
             while (true)
             {
                 try
@@ -231,6 +233,15 @@ namespace InfraVisionAgent
                         Console.ForegroundColor = ConsoleColor.Cyan;
                         object cpuVal = payload.ContainsKey("cpu_load") ? payload["cpu_load"] : 0;
                         object ramFreeVal = payload.ContainsKey("ram_livre_mb") ? payload["ram_livre_mb"] : 0;
+                        
+                        if (modoForcado)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine(string.Format("RECONECTADO [{0:HH:mm:ss}] Conexão restabelecida após falha/inatividade.", DateTime.Now));
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            modoForcado = false;
+                        }
+
                         Console.WriteLine(string.Format("OK [{0:HH:mm:ss}] CPU: {1}% RAM Livre: {2} MB", DateTime.Now, cpuVal, ramFreeVal));
                         Console.ResetColor();
                     }
@@ -239,10 +250,20 @@ namespace InfraVisionAgent
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(string.Format("ERRO: {0}", ex.Message));
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Agente Inativo ou Sem Conexão: Forçando próxima coleta em 10 segundos...");
                     Console.ResetColor();
+                    modoForcado = true;
                 }
 
-                Thread.Sleep(agentConfig.Intervalo * 1000);
+                if (modoForcado)
+                {
+                    Thread.Sleep(10000); // 10 segundos no modo forçado
+                }
+                else
+                {
+                    Thread.Sleep(agentConfig.Intervalo * 1000); // intervalo normal
+                }
             }
         }
 
