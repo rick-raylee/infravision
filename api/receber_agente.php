@@ -127,6 +127,27 @@ try {
         }
     };
 
+    // --- ISP Lookup based on Agent's Public IP ---
+    $public_ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+    if ($public_ip) {
+        $public_ip = explode(',', $public_ip)[0]; // Tratar múltiplos IPs (proxy)
+        $isp_cache_file = sys_get_temp_dir() . '/infravision_isp_' . $dispositivo_id . '.txt';
+        if (!file_exists($isp_cache_file) || (time() - filemtime($isp_cache_file)) > 86400) {
+            $ch = curl_init('http://ip-api.com/json/' . trim($public_ip));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+            $res = curl_exec($ch);
+            curl_close($ch);
+            if ($res) {
+                $json = json_decode($res, true);
+                if (isset($json['isp']) && !empty($json['isp'])) {
+                    file_put_contents($isp_cache_file, $json['isp']);
+                }
+            }
+        }
+    }
+    // ---------------------------------------------
+
     // 3. Preparar sensores para salvar
     $sensoresParaSalvar = [
         ['nome' => 'CPU Load',        'tipo' => 'cpu', 'valor' => $cpu],

@@ -24,7 +24,7 @@ $umid = $umidRow ? round($umidRow['valor']) : null;
 
 // 2. Tráfego de rede real - sensores rede_in / rede_out (agente C# v2+)
 $stmtIn = $db->prepare(
-    "SELECT l.valor, l.data_leitura, s.nome as sensor_nome FROM leituras l
+    "SELECT l.valor, l.data_leitura, s.nome as sensor_nome, s.dispositivo_id FROM leituras l
      JOIN sensores s ON l.sensor_id = s.id
      WHERE s.tipo = 'rede_in'
      ORDER BY l.data_leitura DESC LIMIT 11"
@@ -47,22 +47,12 @@ $labels = array_map(function($r) { return date('H:i', strtotime($r['data_leitura
 
 $interface_name = 'Rede In (Mbps)';
 
-// Tentar buscar o nome do provedor (ISP)
-$cache_file = sys_get_temp_dir() . '/infravision_isp.txt';
-if (file_exists($cache_file) && (time() - filemtime($cache_file)) < 86400) {
-    $interface_name = file_get_contents($cache_file);
-} else {
-    $ch = curl_init('http://ip-api.com/json/');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-    $res = curl_exec($ch);
-    curl_close($ch);
-    if ($res) {
-        $json = json_decode($res, true);
-        if (isset($json['isp']) && !empty($json['isp'])) {
-            $interface_name = $json['isp'];
-            file_put_contents($cache_file, $interface_name);
-        }
+// Tentar buscar o nome do provedor (ISP) do cache gravado pelo agente
+if (!empty($rowsIn) && !empty($rowsIn[0]['dispositivo_id'])) {
+    $disp_id = $rowsIn[0]['dispositivo_id'];
+    $cache_file = sys_get_temp_dir() . '/infravision_isp_' . $disp_id . '.txt';
+    if (file_exists($cache_file)) {
+        $interface_name = file_get_contents($cache_file);
     }
 }
 
