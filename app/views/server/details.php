@@ -77,7 +77,7 @@
                                         <span class="<?= $uso >= 90 ? 'text-danger' : ($uso >= 75 ? 'text-warning' : 'text-success') ?>"><?= round($uso) ?>%</span>
                                     </div>
                                     <div class="progress mb-2" style="height: 10px;">
-                                        <div class="progress-bar bg-primary" style="width: <?= $uso ?>%"></div>
+                                        <div class="progress-bar <?= $uso >= 90 ? 'bg-danger' : ($uso >= 75 ? 'bg-warning' : 'bg-success') ?>" style="width: <?= $uso ?>%"></div>
                                     </div>
                                     <div class="d-flex justify-content-between small text-secondary">
                                         <?php if ($total > 0): ?>
