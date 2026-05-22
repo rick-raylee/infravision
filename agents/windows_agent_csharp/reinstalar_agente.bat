@@ -5,12 +5,16 @@ echo =====================================================
 echo   InfraVision NOC - Reinstalando Agente...
 echo =====================================================
 
-:: Caminho do executavel
-set AGENT_EXE=%~dp0InfraVisionAgent.exe
+:: Tentar encontrar o executavel nas pastas de publish (x64 ou x86)
+set AGENT_EXE=%~dp0publish\x64\InfraVisionAgent.exe
 
 if not exist "%AGENT_EXE%" (
-    echo ERRO: InfraVisionAgent.exe nao encontrado em %~dp0
-    echo Compile o agente primeiro!
+    set AGENT_EXE=%~dp0publish\x86\InfraVisionAgent.exe
+)
+
+if not exist "%AGENT_EXE%" (
+    echo ERRO: InfraVisionAgent.exe nao encontrado nas pastas publish\x64 ou publish\x86.
+    echo Por favor, dê um clique duplo no arquivo 'build_agent.bat' primeiro para gerar o executavel!
     pause
     exit /b 1
 )
