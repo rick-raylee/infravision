@@ -142,17 +142,17 @@ namespace InfraVisionAgent
                 }
             }
 
-            // Install as Scheduled Task
+            // Install via Registry
             if (install)
             {
-                InstallTask();
+                InstallRegistry();
                 return;
             }
 
-            // Uninstall Task
+            // Uninstall via Registry
             if (uninstall)
             {
-                UninstallTask();
+                UninstallRegistry();
                 return;
             }
 
@@ -384,7 +384,7 @@ namespace InfraVisionAgent
             Console.WriteLine();
             Console.WriteLine(string.Format("Configuração salva em: {0}", path));
             Console.ForegroundColor = ConsoleColor.Gray;
-            Console.WriteLine("DICA: Para instalar como tarefa de inicialização em segundo plano, rode como Admin:");
+            Console.WriteLine("DICA: Para instalar para inicializar com o Windows (via Registro), rode como Admin:");
             Console.WriteLine("      InfraVisionAgent.exe --install");
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("=============================================");
@@ -399,12 +399,12 @@ namespace InfraVisionAgent
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
-        private static void InstallTask()
+        private static void InstallRegistry()
         {
             if (!IsUserAdmin())
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("ERRO: Você precisa executar como Administrador para instalar o agente como serviço!");
+                Console.WriteLine("ERRO: Você precisa executar como Administrador para instalar o agente no Registro!");
                 Console.ResetColor();
                 return;
             }
@@ -418,91 +418,34 @@ namespace InfraVisionAgent
                 return;
             }
 
-            string taskName = "InfraVisionAgent";
-
-            // Gerar XML da tarefa com limite de execucao PT0S (sem timeout) e reinicio automatico
-            string xmlTask =
-                "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n" +
-                "<Task version=\"1.2\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\r\n" +
-                "  <RegistrationInfo><Description>InfraVision NOC Agent</Description></RegistrationInfo>\r\n" +
-                "  <Triggers>\r\n" +
-                "    <BootTrigger><Enabled>true</Enabled><Delay>PT30S</Delay></BootTrigger>\r\n" +
-                "  </Triggers>\r\n" +
-                "  <Principals>\r\n" +
-                "    <Principal id=\"Author\"><UserId>S-1-5-18</UserId><RunLevel>HighestAvailable</RunLevel></Principal>\r\n" +
-                "  </Principals>\r\n" +
-                "  <Settings>\r\n" +
-                "    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>\r\n" +
-                "    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>\r\n" +
-                "    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>\r\n" +
-                "    <AllowHardTerminate>false</AllowHardTerminate>\r\n" +
-                "    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>\r\n" +
-                "    <RestartOnFailure><Interval>PT1M</Interval><Count>999</Count></RestartOnFailure>\r\n" +
-                "    <Enabled>true</Enabled>\r\n" +
-                "    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>\r\n" +
-                "  </Settings>\r\n" +
-                "  <Actions Context=\"Author\">\r\n" +
-                string.Format("    <Exec><Command>\"{0}\"</Command></Exec>\r\n", exePath.Replace("\"", "\\\"")) +
-                "  </Actions>\r\n" +
-                "</Task>";
-
-            string xmlPath = Path.Combine(Path.GetTempPath(), "InfraVisionAgentTask.xml");
-            File.WriteAllText(xmlPath, xmlTask, Encoding.Unicode);
-
-            string command = string.Format("schtasks.exe /Create /TN \"{0}\" /XML \"{1}\" /F", taskName, xmlPath);
-
             try
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = "cmd.exe";
-                startInfo.Arguments = "/c " + command;
-                startInfo.CreateNoWindow = true;
-                startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-
-                using (Process process = Process.Start(startInfo))
+                using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
                 {
-                    process.WaitForExit();
-                    int exitCode = process.ExitCode;
-
-                    if (exitCode == 0)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("==================================================");
-                        Console.WriteLine("   AGENTE INSTALADO COM SUCESSO NO SISTEMA!");
-                        Console.WriteLine("==================================================");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.WriteLine("O agente roda em segundo plano continuamente (sem timeout).");
-                        Console.WriteLine("Reinicia automaticamente em caso de falha.");
-                        Console.WriteLine();
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("Para iniciar AGORA sem reiniciar, rode como Admin:");
-                        Console.WriteLine(string.Format("  schtasks.exe /Run /TN \"{0}\"", taskName));
-                        Console.ResetColor();
-                    }
-                    else
-                    {
-                        string err = process.StandardError.ReadToEnd();
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(string.Format("Erro ao instalar no Agendador de Tarefas: {0}", err));
-                        Console.ResetColor();
-                    }
+                    key.SetValue("InfraVisionAgent", "\"" + exePath + "\"");
                 }
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("==================================================");
+                Console.WriteLine("   AGENTE INSTALADO COM SUCESSO NO SISTEMA!");
+                Console.WriteLine("==================================================");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("O agente foi adicionado à inicialização do Windows (Registro).");
+                Console.WriteLine("Ele iniciará automaticamente de forma invisível quando o Windows ligar.");
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Para iniciar AGORA sem reiniciar, basta executar o InfraVisionAgent.exe normalmente.");
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(string.Format("Erro ao rodar instalador: {0}", ex.Message));
+                Console.WriteLine(string.Format("Erro ao instalar no Registro: {0}", ex.Message));
                 Console.ResetColor();
-            }
-            finally
-            {
-                try { File.Delete(xmlPath); } catch { }
             }
         }
 
-        private static void UninstallTask()
+        private static void UninstallRegistry()
         {
             if (!IsUserAdmin())
             {
@@ -512,35 +455,21 @@ namespace InfraVisionAgent
                 return;
             }
 
-            string taskName = "InfraVisionAgent";
-            string command = string.Format("schtasks.exe /Delete /TN \"{0}\" /F", taskName);
-
             try
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = "cmd.exe";
-                startInfo.Arguments = "/c " + command;
-                startInfo.CreateNoWindow = true;
-                startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-
-                using (Process process = Process.Start(startInfo))
+                using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
                 {
-                    process.WaitForExit();
-                    int exitCode = process.ExitCode;
-
-                    if (exitCode == 0)
+                    if (key.GetValue("InfraVisionAgent") != null)
                     {
+                        key.DeleteValue("InfraVisionAgent");
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("Agente desinstalado com sucesso do Agendador de Tarefas.");
+                        Console.WriteLine("Agente removido com sucesso da inicialização do Windows (Registro).");
                         Console.ResetColor();
                     }
                     else
                     {
-                        string err = process.StandardError.ReadToEnd();
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(string.Format("Erro ao desinstalar agente: {0}", err));
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine("O agente não estava instalado na inicialização.");
                         Console.ResetColor();
                     }
                 }
@@ -548,7 +477,7 @@ namespace InfraVisionAgent
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(string.Format("Erro ao rodar desinstalador: {0}", ex.Message));
+                Console.WriteLine(string.Format("Erro ao remover do Registro: {0}", ex.Message));
                 Console.ResetColor();
             }
         }
