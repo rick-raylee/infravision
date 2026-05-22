@@ -382,6 +382,25 @@
                     // 4. Atualizar velocímetros
                     chartIn.updateSeries([pctIn]);
                     chartOut.updateSeries([pctOut]);
+
+                    // Definir escala de cores: Verde (<60%), Amarelo (60-85%), Vermelho (>85%)
+                    function getGaugeColor(pct) {
+                        if (pct < 60) return { color: '#10b981', gradient: '#34d399' }; // Verde
+                        if (pct < 85) return { color: '#f59e0b', gradient: '#fbbf24' }; // Amarelo
+                        return { color: '#ef4444', gradient: '#f87171' }; // Vermelho
+                    }
+
+                    var colorIn = getGaugeColor(pctIn);
+                    chartIn.updateOptions({
+                        colors: [colorIn.color],
+                        fill: { type: 'gradient', gradient: { gradientToColors: [colorIn.gradient] } }
+                    });
+
+                    var colorOut = getGaugeColor(pctOut);
+                    chartOut.updateOptions({
+                        colors: [colorOut.color],
+                        fill: { type: 'gradient', gradient: { gradientToColors: [colorOut.gradient] } }
+                    });
                     
                     // 5. Exibir pico e escalas nas legendas
                     var peakIn = Math.max(...data.rede.in);
