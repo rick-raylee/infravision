@@ -104,7 +104,7 @@
     <div class="col-12 col-lg-8">
         <div class="noc-card">
             <div class="noc-card-header">
-                <span><i class="fa-solid fa-chart-area me-2"></i> Tráfego de Rede (Core Switch)</span>
+                <span><i class="fa-solid fa-chart-area me-2"></i> Tráfego de Rede (<span id="net-interface-name">Core Switch</span>)</span>
                 <span class="badge bg-success">Online</span>
             </div>
             <div class="noc-card-body d-flex align-items-center justify-content-center" style="min-height: 300px;">
@@ -388,6 +388,11 @@
                     var peakOut = Math.max(...data.rede.out);
                     document.getElementById('net-in-peak').innerText = 'Pico: ' + peakIn.toFixed(2) + ' Mbps (Escala: ' + currentNetInMax + ' Mbps)';
                     document.getElementById('net-out-peak').innerText = 'Pico: ' + peakOut.toFixed(2) + ' Mbps (Escala: ' + currentNetOutMax + ' Mbps)';
+                    
+                    // 6. Atualizar nome da interface
+                    if (data.rede.interface) {
+                        document.getElementById('net-interface-name').innerText = data.rede.interface;
+                    }
                 }
             })
             .catch(error => console.error('Erro ao buscar dados:', error));

@@ -24,7 +24,7 @@ $umid = $umidRow ? round($umidRow['valor']) : null;
 
 // 2. Tráfego de rede real - sensores rede_in / rede_out (agente C# v2+)
 $stmtIn = $db->prepare(
-    "SELECT l.valor, l.data_leitura FROM leituras l
+    "SELECT l.valor, l.data_leitura, s.nome as sensor_nome FROM leituras l
      JOIN sensores s ON l.sensor_id = s.id
      WHERE s.tipo = 'rede_in'
      ORDER BY l.data_leitura DESC LIMIT 11"
@@ -45,6 +45,8 @@ $netIn  = array_map(function($r) { return round((float)$r['valor'], 3); }, $rows
 $netOut = array_map(function($r) { return round((float)$r['valor'], 3); }, $rowsOut);
 $labels = array_map(function($r) { return date('H:i', strtotime($r['data_leitura'])); }, $rowsIn);
 
+$interface_name = (!empty($rowsIn) && !empty($rowsIn[0]['sensor_nome'])) ? $rowsIn[0]['sensor_nome'] : 'Core Switch';
+
 // Fallback: agentes antigos sem rede_in/rede_out -> usa contagem de conexoes por momento
 if (empty($netIn)) {
     $stmtFallback = $db->query(
@@ -58,6 +60,7 @@ if (empty($netIn)) {
     $labels  = array_column($fbRows, 't');
     $netIn   = array_map(function($r) { return (float)$r['n']; }, $fbRows);
     $netOut  = array_fill(0, count($fbRows), 0);
+    $interface_name = 'Conexões Ativas';
 }
 
 // Completar com zeros e labels vazios se menos de 11 pontos
@@ -71,6 +74,7 @@ $data = [
         'labels' => $labels,
         'in'     => $netIn,
         'out'    => $netOut,
+        'interface' => $interface_name
     ]
 ];
 
