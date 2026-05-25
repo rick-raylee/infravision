@@ -50,7 +50,7 @@ class SettingsController {
             'SMTP_HOST', 'SMTP_USER', 'SMTP_PORT', 'SMTP_PASS',
             'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID',
             'WHATSAPP_URL', 'WHATSAPP_TOKEN', 'WHATSAPP_NUMBER',
-            'OLLAMA_API_URL', 'OLLAMA_MODEL'
+            'OLLAMA_API_URL', 'OLLAMA_MODEL', 'AGENT_API_TOKEN'
         ];
 
         $newData = [];

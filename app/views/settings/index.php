@@ -170,6 +170,24 @@
                 </div>
             </div>
         </div>
+        <!-- Segurança da API de Agentes -->
+        <div class="col-12 col-lg-6">
+            <div class="noc-card border-danger border-opacity-25">
+                <div class="noc-card-header bg-danger bg-opacity-10">
+                    <span><i class="fa-solid fa-shield-halved text-danger me-2"></i> Segurança da API de Agentes</span>
+                </div>
+                <div class="noc-card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">Token de Autenticação (Bearer)</label>
+                        <input type="text" name="agent_api_token" class="form-control bg-dark border-secondary text-light" placeholder="infravision_default_secure_token" value="<?= htmlspecialchars(getenv('AGENT_API_TOKEN') ?: '') ?>">
+                    </div>
+                    <div class="alert alert-danger bg-danger bg-opacity-10 border-danger small py-2">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Este token deve ser configurado idêntico nos agentes Zabbix/C# instalados nos servidores clientes.
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </form>
 
