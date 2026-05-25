@@ -1,0 +1,6 @@
+﻿{
+  "ApiUrl": "http://infravision.onrender.comm/api/receber_agente.php",
+  "AuthToken": "QUALQUER_TOKEN",
+  "Intervalo": 60,
+  "MonitorNobreak": false
+}

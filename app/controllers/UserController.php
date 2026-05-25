@@ -44,10 +44,17 @@ class UserController {
         $database = new Database();
         $db = $database->getConnection();
         
-        $nome = $_POST['nome'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $senha = password_hash($_POST['senha'] ?? '', PASSWORD_DEFAULT);
+        $nome = trim($_POST['nome'] ?? '');
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+        $senha_raw = trim($_POST['senha'] ?? '');
         $nivel = $_POST['nivel'] ?? 'visitante';
+
+        if (!$nome || !$email || strlen($senha_raw) < 6) {
+            echo "Dados inválidos. O e-mail deve ser válido e a senha deve ter pelo menos 6 caracteres.";
+            exit;
+        }
+
+        $senha = password_hash($senha_raw, PASSWORD_DEFAULT);
 
         $query = "INSERT INTO usuarios (nome, email, senha, nivel) VALUES (:nome, :email, :senha, :nivel)";
         $stmt = $db->prepare($query);
@@ -104,12 +111,22 @@ class UserController {
         $db = $database->getConnection();
         
         $id = $_POST['id'] ?? 0;
-        $nome = $_POST['nome'] ?? '';
-        $email = $_POST['email'] ?? '';
+        $nome = trim($_POST['nome'] ?? '');
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
         $nivel = $_POST['nivel'] ?? 'visitante';
+        $senha_raw = trim($_POST['senha'] ?? '');
 
-        if (!empty($_POST['senha'])) {
-            $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
+        if (!$id || !$nome || !$email) {
+            echo "Dados inválidos. ID, Nome e E-mail são obrigatórios e válidos.";
+            exit;
+        }
+
+        if (!empty($senha_raw)) {
+            if (strlen($senha_raw) < 6) {
+                echo "A nova senha deve ter pelo menos 6 caracteres.";
+                exit;
+            }
+            $senha = password_hash($senha_raw, PASSWORD_DEFAULT);
             $query = "UPDATE usuarios SET nome = :nome, email = :email, senha = :senha, nivel = :nivel WHERE id = :id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':senha', $senha);
@@ -155,9 +172,13 @@ class UserController {
         $stmtUser->bindParam(':id', $id);
         $stmtUser->execute();
         $user_to_delete = $stmtUser->fetch(PDO::FETCH_ASSOC);
-        $details = $user_to_delete 
-            ? "ID: $id, Nome: {$user_to_delete['nome']}, E-mail: {$user_to_delete['email']}" 
-            : "ID: $id";
+        
+        if (!$user_to_delete) {
+            echo "Usuário não encontrado.";
+            exit;
+        }
+
+        $details = "ID: $id, Nome: {$user_to_delete['nome']}, E-mail: {$user_to_delete['email']}";
         
         $query = "DELETE FROM usuarios WHERE id = :id";
         $stmt = $db->prepare($query);

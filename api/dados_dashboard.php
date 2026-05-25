@@ -1,4 +1,15 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['usuario_id'])) {
+    header('Content-Type: application/json');
+    http_response_code(401);
+    echo json_encode(['erro' => 'Não autorizado']);
+    exit;
+}
+
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';

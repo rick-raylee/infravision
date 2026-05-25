@@ -94,52 +94,8 @@ class LogCenterController {
 
         $db = (new Database())->getConnection();
         if ($db) {
-            // Seeder automático de logs de teste cobrindo todas as 6 categorias solicitadas
-            try {
-                $stmtCountLogs = $db->query("SELECT COUNT(*) FROM logs");
-                $logsCount = $stmtCountLogs ? (int)$stmtCountLogs->fetchColumn() : 0;
-                if ($logsCount < 10) {
-                    // Limpar logs antigos para inicializar a demonstração completa
-                    $db->exec("DELETE FROM logs");
-                    
-                    // 1. Logs de Sistema Operacional (Syslogs)
-                    $db->exec("INSERT INTO logs (usuario_id, acao, detalhes, ip_origem) VALUES 
-                        (null, 'Syslog - Evento de Hardware', 'Alerta de superaquecimento no processador central (Core #3 atingiu 92°C)', '127.0.0.1'),
-                        (null, 'Syslog - Alteração de Estado', 'Servidor de Produção SRV-BD01 reinicializado com sucesso após atualização agendada', '127.0.0.1'),
-                        (null, 'Syslog - Serviço de Infraestrutura', 'Falha crítica no serviço DNS do Active Directory (serviço parou de responder)', '127.0.0.1')");
-
-                    // 2. Logs de Aplicação
-                    $db->exec("INSERT INTO logs (usuario_id, acao, detalhes, ip_origem) VALUES 
-                        (null, 'Erro de Aplicação', 'Exceção NullReferenceException no fluxo de finalização de compras (API V2)', '127.0.0.1'),
-                        (null, 'Acesso de Aplicação', 'Requisição HTTP POST /api/v1/checkout - Status 500 (Erro Interno do Servidor)', '192.168.10.15'),
-                        (null, 'Fluxo de Operação', 'Inicialização bem-sucedida do serviço worker de envio de e-mails em lote', '127.0.0.1')");
-
-                    // 3. Logs de Segurança e Auditoria
-                    $db->exec("INSERT INTO logs (usuario_id, acao, detalhes, ip_origem) VALUES 
-                        (null, 'Segurança - Autenticação', 'Tentativa de login malsucedida para o usuário root - IP 185.220.101.4 (Alerta de Força Bruta)', '185.220.101.4'),
-                        (1, 'Segurança - Privilégios', 'Elevação de privilégios para o usuário suporte_tecnico ao grupo Administradores', '192.168.1.50'),
-                        (null, 'Segurança - Ameaça', 'Ação de malware bloqueada pelo Firewall de Endpoint local (Trojan.Win32.Generic)', '127.0.0.1')");
-
-                    // 4. Logs de Rede
-                    $db->exec("INSERT INTO logs (usuario_id, acao, detalhes, ip_origem) VALUES 
-                        (null, 'Rede - Conexão', 'Conexão bloqueada na porta TCP 445 (SMB) a partir do IP externo 45.138.2.14', '45.138.2.14'),
-                        (null, 'Rede - Desempenho', 'Queda de pacotes excessiva detectada na interface WAN (12.4% de perda de pacotes no gateway)', '127.0.0.1'),
-                        (null, 'Rede - Desempenho', 'Instabilidade de rotas detectada: oscilação na sessão BGP primária com o provedor de trânsito', '127.0.0.1')");
-
-                    // 5. Logs de Servidor Web (Web Servers)
-                    $db->exec("INSERT INTO logs (usuario_id, acao, detalhes, ip_origem) VALUES 
-                        (null, 'Servidor Web - Tráfego', 'Origem geográfica detectada incomum para o endpoint /admin de IP localizado fora da faixa padrão', '93.184.216.34'),
-                        (null, 'Servidor Web - Erro', 'Requisição malformada HTTP/1.1 (Erro 400 Bad Request) em lote detectada no log do Apache', '127.0.0.1')");
-
-                    // 6. Logs de Serviços Específicos
-                    $db->exec("INSERT INTO logs (usuario_id, acao, detalhes, ip_origem) VALUES 
-                        (null, 'Banco de Dados', 'Consulta SQL lenta detectada (tempo de execução: 8.42s) - SELECT * FROM transacoes_historico', '127.0.0.1'),
-                        (null, 'Sistema de Backup', 'Rotina de cópia de segurança concluída com SUCESSO - Volume Backup_Infra_Prod', '127.0.0.1'),
-                        (null, 'Sistema de Backup', 'Rotina de cópia de segurança FALHOU - Sem espaço disponível no storage NAS secundário', '127.0.0.1')");
-                }
-            } catch (Exception $e) {
-                // Falha silenciosa de seed
-            }
+            // O seeder automático foi removido por razões de segurança.
+            // Os logs agora refletem estritamente os eventos reais do banco de dados.
 
             // Buscar Alertas
             $queryAlertas = "SELECT a.id, a.mensagem, a.severidade, a.status, a.criado_em,

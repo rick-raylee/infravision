@@ -6,14 +6,21 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
 
-// Na vida real, validaríamos um TOKEN (Bearer) para garantir a segurança
+// CORREÇÃO: Autenticação via Token Obrigatória
+$expectedToken = getenv('AGENT_API_TOKEN') ?: 'infravision_default_secure_token';
+$authHeader = '';
+
 if (function_exists('apache_request_headers')) {
     $headers = apache_request_headers();
-    // if (!isset($headers['Authorization']) || $headers['Authorization'] !== 'Bearer SEU_TOKEN_AQUI') {
-    //     http_response_code(401);
-    //     echo json_encode(['erro' => 'Não autorizado']);
-    //     exit;
-    // }
+    $authHeader = $headers['Authorization'] ?? '';
+} elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+}
+
+if (strpos($authHeader, 'Bearer ') !== 0 || substr($authHeader, 7) !== $expectedToken) {
+    http_response_code(401);
+    echo json_encode(['erro' => 'Não autorizado. Token inválido.']);
+    exit;
 }
 
 // Ler o JSON enviado pelo agente (via POST ou CLI stdin)

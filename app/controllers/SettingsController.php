@@ -56,7 +56,8 @@ class SettingsController {
         $newData = [];
         foreach ($keys as $key) {
             if (isset($_POST[strtolower($key)])) {
-                $newData[$key] = trim($_POST[strtolower($key)]);
+                // CORREÇÃO (Segurança): Sanitizar contra injeção de nova linha no .env
+                $newData[$key] = str_replace(["\r", "\n"], '', trim($_POST[strtolower($key)]));
             }
         }
 
