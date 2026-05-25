@@ -1,0 +1,92 @@
+<?php
+/**
+ * Infravision - Notifier Engine (Nagios-style Notification Dispatcher)
+ * Lê alertas recém-gerados e dispara notificações via Telegram.
+ */
+
+$base_dir = dirname(__DIR__);
+require_once $base_dir . '/config/database.php';
+
+$db = new Database();
+$conn = $db->getConnection();
+
+$telegram_token = getenv('TELEGRAM_BOT_TOKEN');
+$telegram_chat_id = getenv('TELEGRAM_CHAT_ID');
+
+function sendTelegramMessage($token, $chat_id, $message) {
+    if (empty($token) || empty($chat_id)) return false;
+    
+    $url = "https://api.telegram.org/bot{$token}/sendMessage";
+    $data = [
+        'chat_id' => $chat_id,
+        'text' => $message,
+        'parse_mode' => 'Markdown'
+    ];
+    
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    return $response;
+}
+
+echo "[NOTIFIER] Buscando alertas PROBLEM nao notificados...\n";
+
+// Buscar alertas ativos não notificados
+$queryProblems = "SELECT a.id, a.mensagem, a.severidade, a.criado_em, d.nome as dispositivo_nome, d.ip
+                  FROM alertas a
+                  LEFT JOIN dispositivos d ON a.dispositivo_id = d.id
+                  WHERE a.status = 'ativo' AND a.notificado_em IS NULL";
+$stmt = $conn->query($queryProblems);
+$problems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($problems as $alert) {
+    $icon = "🚨";
+    if ($alert['severidade'] === 'aviso') $icon = "⚠️";
+    if ($alert['severidade'] === 'info') $icon = "ℹ️";
+
+    $msg = "{$icon} *[PROBLEM] InfraVision Alert*\n";
+    $msg .= "*Dispositivo:* {$alert['dispositivo_nome']} ({$alert['ip']})\n";
+    $msg .= "*Severidade:* " . strtoupper($alert['severidade']) . "\n";
+    $msg .= "*Data/Hora:* {$alert['criado_em']}\n";
+    $msg .= "*Detalhes:* {$alert['mensagem']}";
+
+    echo "   Enviando PROBLEM para Alerta #{$alert['id']}... ";
+    sendTelegramMessage($telegram_token, $telegram_chat_id, $msg);
+    
+    $update = $conn->prepare("UPDATE alertas SET notificado_em = NOW() WHERE id = ?");
+    $update->execute([$alert['id']]);
+    echo "OK\n";
+}
+
+echo "[NOTIFIER] Buscando alertas RECOVERY nao notificados...\n";
+
+// Buscar alertas resolvidos não notificados
+$queryRecoveries = "SELECT a.id, a.mensagem, a.severidade, a.resolvido_em, d.nome as dispositivo_nome, d.ip
+                    FROM alertas a
+                    LEFT JOIN dispositivos d ON a.dispositivo_id = d.id
+                    WHERE a.status = 'resolvido' AND a.notificado_em IS NOT NULL AND a.resolvido_notificado_em IS NULL";
+$stmt = $conn->query($queryRecoveries);
+$recoveries = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($recoveries as $alert) {
+    $msg = "✅ *[RECOVERY] InfraVision Alert*\n";
+    $msg .= "*Dispositivo:* {$alert['dispositivo_nome']} ({$alert['ip']})\n";
+    $msg .= "*Status Anterior:* " . strtoupper($alert['severidade']) . "\n";
+    $msg .= "*Recuperado em:* {$alert['resolvido_em']}\n";
+    $msg .= "*Detalhes:* O servico/sensor voltou ao normal.\n";
+    $msg .= "*Mensagem original:* {$alert['mensagem']}";
+
+    echo "   Enviando RECOVERY para Alerta #{$alert['id']}... ";
+    sendTelegramMessage($telegram_token, $telegram_chat_id, $msg);
+    
+    $update = $conn->prepare("UPDATE alertas SET resolvido_notificado_em = NOW() WHERE id = ?");
+    $update->execute([$alert['id']]);
+    echo "OK\n";
+}
+
+echo "[NOTIFIER] Rotina de notificacoes finalizada.\n";

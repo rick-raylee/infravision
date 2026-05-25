@@ -149,4 +149,9 @@ foreach ($sensores as $sensor) {
     }
 }
 
-echo "[INFO] Verificacao concluida.\n";
+echo "[INFO] Verificacao de plugins concluida.\n";
+
+// Disparar o Notifier Engine para enviar alertas para o Telegram
+echo "----------------------------------------\n";
+echo "[INFO] Iniciando Notifier Engine...\n";
+require_once __DIR__ . '/notifier_engine.php';
