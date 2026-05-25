@@ -65,20 +65,7 @@ if (!empty($rowsIn) && !empty($rowsIn[0]['dispositivo_id'])) {
     if (file_exists($cache_file) && (time() - filemtime($cache_file)) < 86400) {
         $interface_name = file_get_contents($cache_file);
     } else {
-        // Fallback imediato se o cache não existir (Agente demorando a reportar)
-        // Usa cURL para timeout rápido
-        $ch = curl_init('http://ip-api.com/json/');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-        $res = curl_exec($ch);
-        curl_close($ch);
-        if ($res) {
-            $json = json_decode($res, true);
-            if (isset($json['isp']) && !empty($json['isp'])) {
-                $interface_name = $json['isp'];
-                file_put_contents($cache_file, $interface_name);
-            }
-        }
+        $interface_name = 'Interface Principal';
     }
 }
 

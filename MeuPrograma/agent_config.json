@@ -1,6 +1,6 @@
-﻿{
-  "ApiUrl": "http://infravision.onrender.comm/api/receber_agente.php",
-  "AuthToken": "QUALQUER_TOKEN",
+{
+  "ApiUrl": "http://localhost/infravision/api/receber_agente.php",
+  "AuthToken": "S3cur3T0k3n_InfraV1s1on_2026",
   "Intervalo": 60,
   "MonitorNobreak": false
 }
