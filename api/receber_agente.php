@@ -215,21 +215,28 @@ try {
     }
 
     // 4. Salvar Conexões Ativas (Tráfego de Rede Real)
-    $stmtDeleteConn = $db->prepare("DELETE FROM conexoes WHERE dispositivo_id = ?");
-    $stmtDeleteConn->execute([$dispositivo_id]);
+    $db->beginTransaction();
+    try {
+        $stmtDeleteConn = $db->prepare("DELETE FROM conexoes WHERE dispositivo_id = ?");
+        $stmtDeleteConn->execute([$dispositivo_id]);
 
-    if (!empty($conexoes)) {
-        $stmtInsertConn = $db->prepare("INSERT INTO conexoes (dispositivo_id, origem, ip_origem, destino, servico, latencia, carga) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        foreach ($conexoes as $conn_data) {
-            $orig = $conn_data['origem'] ?? $hostname;
-            $ip_orig = $conn_data['ip_origem'] ?? $ip;
-            $dest = $conn_data['destino'] ?? 'Desconhecido';
-            $serv = $conn_data['servico'] ?? 'N/A';
-            $lat = isset($conn_data['latencia']) ? (int)$conn_data['latencia'] : 0;
-            $carg = isset($conn_data['carga']) ? (int)$conn_data['carga'] : 0;
-            
-            $stmtInsertConn->execute([$dispositivo_id, $orig, $ip_orig, $dest, $serv, $lat, $carg]);
+        if (!empty($conexoes)) {
+            $stmtInsertConn = $db->prepare("INSERT INTO conexoes (dispositivo_id, origem, ip_origem, destino, servico, latencia, carga) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            foreach ($conexoes as $conn_data) {
+                $orig = $conn_data['origem'] ?? $hostname;
+                $ip_orig = $conn_data['ip_origem'] ?? $ip;
+                $dest = $conn_data['destino'] ?? 'Desconhecido';
+                $serv = $conn_data['servico'] ?? 'N/A';
+                $lat = isset($conn_data['latencia']) ? (int)$conn_data['latencia'] : 0;
+                $carg = isset($conn_data['carga']) ? (int)$conn_data['carga'] : 0;
+                
+                $stmtInsertConn->execute([$dispositivo_id, $orig, $ip_orig, $dest, $serv, $lat, $carg]);
+            }
         }
+        $db->commit();
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw $e;
     }
 
     // 5. Nobreak: somente se o agente estiver com monitor_nobreak=true E o dispositivo ja existir no painel

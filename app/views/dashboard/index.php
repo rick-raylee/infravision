@@ -150,7 +150,7 @@
         <div class="noc-card">
             <div class="noc-card-header">
                 <span><i class="fa-solid fa-list-check me-2"></i> Status dos Serviços Críticos</span>
-                <button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.location.reload();"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
             </div>
             <div class="noc-card-body p-0">
                 <div class="table-responsive">

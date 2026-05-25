@@ -28,27 +28,15 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <?php foreach ($resultados_urls as $res): ?>
                             <tr>
-                                <td>Site Corporativo</td>
-                                <td><a href="#" class="text-primary">https://empresa.com.br</a></td>
-                                <td><span class="badge bg-success">200 OK</span></td>
-                                <td>145ms</td>
-                                <td>99.9%</td>
+                                <td><?= htmlspecialchars($res['nome']) ?></td>
+                                <td><a href="<?= htmlspecialchars($res['url']) ?>" target="_blank" class="text-primary"><?= htmlspecialchars($res['url']) ?></a></td>
+                                <td><span class="badge <?= $res['status_class'] ?>"><?= $res['status_text'] ?></span></td>
+                                <td><?= $res['latency'] ?></td>
+                                <td><?= $res['uptime'] ?></td>
                             </tr>
-                            <tr>
-                                <td>API de Clientes</td>
-                                <td><code>https://api.empresa.com/v1</code></td>
-                                <td><span class="badge bg-success">200 OK</span></td>
-                                <td>82ms</td>
-                                <td>100%</td>
-                            </tr>
-                            <tr>
-                                <td>Webmail (OWA)</td>
-                                <td><a href="#" class="text-primary">https://mail.empresa.com/owa</a></td>
-                                <td><span class="badge bg-warning text-dark">503 Busy</span></td>
-                                <td>2500ms</td>
-                                <td>98.5%</td>
-                            </tr>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>

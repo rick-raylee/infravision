@@ -43,7 +43,7 @@
         <div class="noc-card">
             <div class="noc-card-header">
                 <span><i class="fa-solid fa-list me-2"></i> Matriz de Comunicação (Origem -> Destino)</span>
-                <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary w-25" placeholder="Filtrar por IP ou Hostname...">
+                <input type="text" id="trafficFilter" class="form-control form-control-sm bg-dark text-light border-secondary w-25" placeholder="Filtrar por IP ou Hostname...">
             </div>
             <div class="noc-card-body p-0">
                 <div class="table-responsive">
@@ -93,22 +93,32 @@
 <script>
     const trafficData = <?= json_encode($conexoes) ?>;
 
-    function renderTraffic() {
+    function renderTraffic(query = '') {
         const body = document.getElementById('traffic-body');
         body.innerHTML = '';
         
-        if (!trafficData || trafficData.length === 0) {
+        const filteredData = trafficData.filter(item => {
+            const search = query.toLowerCase();
+            const origin = (item.origin ?? item.origem ?? '').toLowerCase();
+            const ip = (item.ip ?? '').toLowerCase();
+            const dest = (item.destino ?? '').toLowerCase();
+            const service = (item.service ?? item.servico ?? '').toLowerCase();
+            
+            return origin.includes(search) || ip.includes(search) || dest.includes(search) || service.includes(search);
+        });
+        
+        if (!filteredData || filteredData.length === 0) {
             body.innerHTML = `
                 <tr>
                     <td colspan="7" class="text-center text-secondary py-4">
-                        <i class="fa-solid fa-circle-info me-2"></i> Nenhuma conexão ativa registrada no banco de dados. Inicie o agente PowerShell para enviar dados de rede reais.
+                        <i class="fa-solid fa-circle-info me-2"></i> ${query ? 'Nenhum resultado encontrado para o filtro atual.' : 'Nenhuma conexão ativa registrada no banco de dados. Inicie o agente PowerShell para enviar dados de rede reais.'}
                     </td>
                 </tr>
             `;
             return;
         }
         
-        trafficData.forEach(item => {
+        filteredData.forEach(item => {
             const load = Number(item.load) || 0;
             const loadClass = load > 80 ? 'bg-danger' : (load > 50 ? 'bg-warning' : 'bg-success');
             const row = `
@@ -131,6 +141,13 @@
     }
 
     renderTraffic();
+
+    const trafficFilter = document.getElementById('trafficFilter');
+    if (trafficFilter) {
+        trafficFilter.addEventListener('input', function(e) {
+            renderTraffic(e.target.value);
+        });
+    }
 
     // Recarregar os dados do banco a cada 30 segundos
     setInterval(() => {
