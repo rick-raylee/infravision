@@ -13,6 +13,10 @@ $conn = $db->getConnection();
 $telegram_token = getenv('TELEGRAM_BOT_TOKEN');
 $telegram_chat_id = getenv('TELEGRAM_CHAT_ID');
 
+$whatsapp_url = getenv('WHATSAPP_URL');
+$whatsapp_token = getenv('WHATSAPP_TOKEN');
+$whatsapp_number = getenv('WHATSAPP_NUMBER');
+
 function sendTelegramMessage($token, $chat_id, $message) {
     if (empty($token) || empty($chat_id)) return false;
     
@@ -25,9 +29,35 @@ function sendTelegramMessage($token, $chat_id, $message) {
     
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    return $response;
+}
+
+function sendWhatsAppMessage($url, $token, $number, $message) {
+    if (empty($url) || empty($number)) return false;
+    
+    // Formato padrão para muitas APIs não-oficiais (Z-API, Evolution API, Mega API)
+    $data = json_encode([
+        'number' => $number,
+        'text' => $message,
+        'message' => $message // Fallback para outras APIs
+    ]);
+    
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $token,
+        'apikey: ' . $token
+    ]);
     $response = curl_exec($ch);
     curl_close($ch);
     
@@ -57,6 +87,9 @@ foreach ($problems as $alert) {
 
     echo "   Enviando PROBLEM para Alerta #{$alert['id']}... ";
     sendTelegramMessage($telegram_token, $telegram_chat_id, $msg);
+    if (!empty($whatsapp_url)) {
+        sendWhatsAppMessage($whatsapp_url, $whatsapp_token, $whatsapp_number, $msg);
+    }
     
     $update = $conn->prepare("UPDATE alertas SET notificado_em = NOW() WHERE id = ?");
     $update->execute([$alert['id']]);
@@ -83,6 +116,9 @@ foreach ($recoveries as $alert) {
 
     echo "   Enviando RECOVERY para Alerta #{$alert['id']}... ";
     sendTelegramMessage($telegram_token, $telegram_chat_id, $msg);
+    if (!empty($whatsapp_url)) {
+        sendWhatsAppMessage($whatsapp_url, $whatsapp_token, $whatsapp_number, $msg);
+    }
     
     $update = $conn->prepare("UPDATE alertas SET resolvido_notificado_em = NOW() WHERE id = ?");
     $update->execute([$alert['id']]);
