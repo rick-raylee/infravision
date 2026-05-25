@@ -41,7 +41,18 @@ function sendTelegramMessage($token, $chat_id, $message) {
 function sendWhatsAppMessage($url, $token, $number, $message) {
     if (empty($url) || empty($number)) return false;
     
-    // Formato padrão para muitas APIs não-oficiais (Z-API, Evolution API, Mega API)
+    // Suporte especial para CallMeBot (que é gratuito e não requer instalação local)
+    if (strpos($url, 'callmebot.com') !== false) {
+        $final_url = $url . "?phone=" . urlencode($number) . "&text=" . urlencode($message) . "&apikey=" . urlencode($token);
+        $ch = curl_init($final_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return $response;
+    }
+    
+    // Formato padrão para APIs REST como Evolution API, Z-API, Mega API
     $data = json_encode([
         'number' => $number,
         'text' => $message,
