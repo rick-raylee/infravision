@@ -6,6 +6,9 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/database.php';
 
+// Instanciar o Database para carregar as variáveis do .env
+$db = (new Database())->getConnection();
+
 // CORREÇÃO: Autenticação via Token Obrigatória
 $expectedToken = getenv('AGENT_API_TOKEN') ?: 'infravision_default_secure_token';
 $authHeader = '';
