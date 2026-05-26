@@ -132,6 +132,40 @@ try {
             padding: 1.5rem;
             border-bottom: 1px solid #1e2638;
         }
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid #1e2638;
+            }
+            .sidebar-menu {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding: 0.5rem;
+                -webkit-overflow-scrolling: touch;
+            }
+            .sidebar-link {
+                padding: 0.5rem 1rem;
+                border-left: none !important;
+                border-bottom: 3px solid transparent;
+                white-space: nowrap;
+            }
+            .sidebar-link.active {
+                border-bottom: 3px solid var(--noc-primary) !important;
+                box-shadow: inset 0 -6px 12px -4px rgba(59, 130, 246, 0.6) !important;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
