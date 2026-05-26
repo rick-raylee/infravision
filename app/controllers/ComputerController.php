@@ -51,6 +51,11 @@ class ComputerController {
                     $query = "UPDATE dispositivos SET mouse_trocado_em = ? WHERE id = ?";
                 } elseif ($tipo_periferico === 'teclado') {
                     $query = "UPDATE dispositivos SET teclado_trocado_em = ? WHERE id = ?";
+                } elseif ($tipo_periferico === 'entrega_save') {
+                    $query = "UPDATE dispositivos SET data_entrega = ? WHERE id = ?";
+                } elseif ($tipo_periferico === 'entrega_delete') {
+                    $query = "UPDATE dispositivos SET data_entrega = NULL WHERE id = ?";
+                    $data = null; // No date needed for delete
                 }
 
                 if (isset($query)) {
