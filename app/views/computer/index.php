@@ -304,6 +304,36 @@
                         </div>
 
                         <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-solid fa-id-badge"></i></div>
+                            <div class="ficha-row__label">Colaborador / Setor</div>
+                            <div class="ficha-row__value" style="display:flex; flex-direction:column; gap:8px; width:100%;">
+                                <?php if (!empty($c['funcionario']) || !empty($c['setor'])): ?>
+                                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                                        <div>
+                                            <div style="font-weight:600; color:#fbbf24;"><?= htmlspecialchars($c['funcionario'] ?: 'Sem nome') ?></div>
+                                            <div style="font-size:0.7rem; color:rgba(255,255,255,0.45);"><i class="fa-solid fa-building me-1"></i><?= htmlspecialchars($c['setor'] ?: 'Sem setor') ?></div>
+                                        </div>
+                                        <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" style="margin:0; padding:0;">
+                                            <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                                            <input type="hidden" name="tipo_periferico" value="funcionario_delete">
+                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 m-0" title="Remover Atribuição" style="line-height:1;"><i class="fa-solid fa-times-circle"></i></button>
+                                        </form>
+                                    </div>
+                                <?php else: ?>
+                                    <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" class="d-flex flex-column" style="gap:5px; margin:0; width:100%;">
+                                        <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                                        <input type="hidden" name="tipo_periferico" value="funcionario_save">
+                                        <div class="d-flex" style="gap:5px;">
+                                            <input type="text" name="funcionario" placeholder="Nome do Funcionário" required style="flex:1; min-width:0; font-size:0.7rem; padding:2px 5px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.2); color:#e2e8f0;">
+                                            <input type="text" name="setor" placeholder="Setor / Depto" required style="width:90px; font-size:0.7rem; padding:2px 5px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.2); color:#e2e8f0;">
+                                            <button type="submit" class="btn btn-sm btn-primary" style="padding:2px 6px; line-height:1;" title="Salvar Atribuição"><i class="fa-solid fa-save"></i></button>
+                                        </div>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="ficha-row">
                             <div class="ficha-row__icon"><i class="fa-brands fa-windows"></i></div>
                             <div class="ficha-row__label">Sistema</div>
                             <div class="ficha-row__value"><?= htmlspecialchars($c['sistema_operacional'] ?? 'Desconhecido') ?></div>

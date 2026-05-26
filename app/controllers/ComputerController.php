@@ -47,6 +47,8 @@ class ComputerController {
             $data = $_POST['data'] ?? date('Y-m-d');
 
             if ($id && $db) {
+                $params = [$data, $id];
+
                 if ($tipo_periferico === 'mouse') {
                     $query = "UPDATE dispositivos SET mouse_trocado_em = ? WHERE id = ?";
                 } elseif ($tipo_periferico === 'teclado') {
@@ -55,12 +57,18 @@ class ComputerController {
                     $query = "UPDATE dispositivos SET data_entrega = ? WHERE id = ?";
                 } elseif ($tipo_periferico === 'entrega_delete') {
                     $query = "UPDATE dispositivos SET data_entrega = NULL WHERE id = ?";
-                    $data = null; // No date needed for delete
+                    $params = [$id];
+                } elseif ($tipo_periferico === 'funcionario_save') {
+                    $query = "UPDATE dispositivos SET funcionario = ?, setor = ? WHERE id = ?";
+                    $params = [$_POST['funcionario'] ?? '', $_POST['setor'] ?? '', $id];
+                } elseif ($tipo_periferico === 'funcionario_delete') {
+                    $query = "UPDATE dispositivos SET funcionario = NULL, setor = NULL WHERE id = ?";
+                    $params = [$id];
                 }
 
                 if (isset($query)) {
                     $stmt = $db->prepare($query);
-                    $stmt->execute([$data, $id]);
+                    $stmt->execute($params);
                 }
             }
         }
