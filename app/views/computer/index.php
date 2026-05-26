@@ -266,6 +266,14 @@
                         </div>
 
                         <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-regular fa-calendar-check"></i></div>
+                            <div class="ficha-row__label">1º Registro (Entrega)</div>
+                            <div class="ficha-row__value">
+                                <?= !empty($c['criado_em']) ? date('d/m/Y \à\s H:i', strtotime($c['criado_em'])) : 'Desconhecido' ?>
+                            </div>
+                        </div>
+
+                        <div class="ficha-row">
                             <div class="ficha-row__icon"><i class="fa-solid fa-user"></i></div>
                             <div class="ficha-row__label">Usuário Logado</div>
                             <div class="ficha-row__value">
