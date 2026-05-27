@@ -162,7 +162,7 @@ namespace InfraVisionAgent
                 string cleanUrl = urlParam;
                 if (!cleanUrl.StartsWith("http://") && !cleanUrl.StartsWith("https://"))
                 {
-                    cleanUrl = "http://" + cleanUrl;
+                    cleanUrl = "https://" + cleanUrl;
                 }
                 if (!cleanUrl.EndsWith("receber_agente.php"))
                 {
@@ -245,6 +245,26 @@ namespace InfraVisionAgent
                         Console.WriteLine(string.Format("OK [{0:HH:mm:ss}] CPU: {1}% RAM Livre: {2} MB", DateTime.Now, cpuVal, ramFreeVal));
                         Console.ResetColor();
                     }
+                }
+                catch (WebException wex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(string.Format("ERRO DE REDE: {0}", wex.Message));
+                    if (wex.Response != null)
+                    {
+                        try
+                        {
+                            using (var reader = new StreamReader(wex.Response.GetResponseStream()))
+                            {
+                                Console.WriteLine("Detalhes do Servidor: " + reader.ReadToEnd());
+                            }
+                        }
+                        catch { }
+                    }
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Agente Inativo ou Sem Conexão: Forçando próxima coleta em 10 segundos...");
+                    Console.ResetColor();
+                    modoForcado = true;
                 }
                 catch (Exception ex)
                 {
@@ -380,7 +400,7 @@ namespace InfraVisionAgent
 
             if (!inputUrl.StartsWith("http://") && !inputUrl.StartsWith("https://"))
             {
-                inputUrl = "http://" + inputUrl;
+                inputUrl = "https://" + inputUrl;
             }
             if (!inputUrl.EndsWith("receber_agente.php"))
             {
