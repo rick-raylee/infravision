@@ -1,5 +1,6 @@
 RewriteEngine On
-
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
 # Impede acesso direto a arquivos que não existem, redirecionando para index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

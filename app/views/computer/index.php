@@ -362,6 +362,28 @@
                         </div>
 
                         <div class="ficha-row">
+                            <div class="ficha-row__icon"><i class="fa-solid fa-tag"></i></div>
+                            <div class="ficha-row__label">Patrimônio</div>
+                            <div class="ficha-row__value" style="display:flex; align-items:center; gap:8px;">
+                                <?php if (!empty($c['patrimonio'])): ?>
+                                    <code><?= htmlspecialchars($c['patrimonio']) ?></code>
+                                    <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" style="margin:0; padding:0; display:inline-flex;">
+                                        <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                                        <input type="hidden" name="tipo_periferico" value="patrimonio_delete">
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0 m-0" title="Apagar Patrimônio" style="line-height:1;"><i class="fa-solid fa-times-circle"></i></button>
+                                    </form>
+                                <?php else: ?>
+                                    <form action="<?= $base_path ?>/computer/update-peripherals" method="POST" class="d-flex align-items-center" style="gap:5px; margin:0;">
+                                        <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                                        <input type="hidden" name="tipo_periferico" value="patrimonio_save">
+                                        <input type="text" name="patrimonio" placeholder="Nº Patrimônio" required style="font-size:0.7rem; padding:2px 5px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.2); color:#e2e8f0; max-width: 100px;">
+                                        <button type="submit" class="btn btn-sm btn-primary" style="padding:2px 6px; line-height:1;" title="Salvar Patrimônio"><i class="fa-solid fa-save"></i></button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="ficha-row">
                             <div class="ficha-row__icon"><i class="fa-solid fa-gauge-high"></i></div>
                             <div class="ficha-row__label">Uso Recente</div>
                             <div class="ficha-row__value">

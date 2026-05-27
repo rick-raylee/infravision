@@ -64,6 +64,12 @@ class ComputerController {
                 } elseif ($tipo_periferico === 'funcionario_delete') {
                     $query = "UPDATE dispositivos SET funcionario = NULL, setor = NULL WHERE id = ?";
                     $params = [$id];
+                } elseif ($tipo_periferico === 'patrimonio_save') {
+                    $query = "UPDATE dispositivos SET patrimonio = ? WHERE id = ?";
+                    $params = [$_POST['patrimonio'] ?? '', $id];
+                } elseif ($tipo_periferico === 'patrimonio_delete') {
+                    $query = "UPDATE dispositivos SET patrimonio = NULL WHERE id = ?";
+                    $params = [$id];
                 }
 
                 if (isset($query)) {
