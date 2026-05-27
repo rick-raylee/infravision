@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
             <h1><i class="fa-solid fa-globe me-2 text-primary"></i> Monitor de Serviços e URLs</h1>
-            <button class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Nova URL</button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newUrlModal"><i class="fa-solid fa-plus me-1"></i> Nova URL</button>
         </div>
         <p class="text-secondary">Acompanhamento de disponibilidade de sites, APIs e serviços específicos como Exchange.</p>
     </div>
@@ -88,6 +88,33 @@
                         <span class="badge bg-danger">Out of Sync</span>
                     </li>
                 </ul>
+            </div>
+        </div>
+</div>
+
+<!-- Modal Nova URL -->
+<div class="modal fade" id="newUrlModal" tabindex="-1" aria-labelledby="newUrlModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="newUrlModalLabel"><i class="fa-solid fa-plus me-2 text-primary"></i>Nova URL</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newUrlForm">
+                    <div class="mb-3">
+                        <label for="urlName" class="form-label">Nome do Serviço</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="urlName" placeholder="Ex: API de Pagamentos" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="urlAddress" class="form-label">URL / Endpoint</label>
+                        <input type="url" class="form-control bg-dark text-light border-secondary" id="urlAddress" placeholder="https://..." required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="$('#newUrlModal').modal('hide');">Salvar</button>
             </div>
         </div>
     </div>
