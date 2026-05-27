@@ -1,7 +1,32 @@
+# ANTI-HACK: Desativar a listagem de diretórios
+Options -Indexes
+
+# ANTI-CLONE & ANTI-HACK: Proteger arquivos sensíveis
+<FilesMatch "^\.env|^\.git|^\.gitignore|^\.log|database\.sql|composer\.json|package\.json|.*\.exe|.*\.bat|.*\.dll|.*\.sh">
+    Require all denied
+</FilesMatch>
+
+# ANTI-HACK: Proteção de Cabeçalhos de Segurança (WAF)
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    # Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:;"
+</IfModule>
+
 RewriteEngine On
+
+# ANTI-HACK / ANTI-VIRUS: WAF Básico contra Injeções via URL
+RewriteCond %{QUERY_STRING} (?:<|%3C).*script.*(?:>|%3E) [NC,OR]
+RewriteCond %{QUERY_STRING} (?:base64_encode|localhost|%0A|boot\.ini|echo) [NC,OR]
+RewriteCond %{QUERY_STRING} (?:(\%27)|(\')).*(?:(\%6F)|o|(\%4F))(?:(\%72)|r|(\%52)) [NC]
+RewriteRule ^ - [F]
+
 RewriteCond %{HTTP:Authorization} ^(.*)
 RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
-# Impede acesso direto a arquivos que não existem, redirecionando para index.php
+
+# Redirecionar tudo que não for arquivo real/diretório real para index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
