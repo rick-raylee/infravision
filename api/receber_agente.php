@@ -9,22 +9,22 @@ require_once __DIR__ . '/../config/database.php';
 // Instanciar o Database para carregar as variáveis do .env
 $db = (new Database())->getConnection();
 
-// CORREÇÃO: Autenticação via Token Obrigatória
-$expectedToken = getenv('AGENT_API_TOKEN') ?: 'infravision_default_secure_token';
-$authHeader = '';
-
-if (function_exists('apache_request_headers')) {
-    $headers = apache_request_headers();
-    $authHeader = $headers['Authorization'] ?? '';
-} elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-    $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
-}
-
-if (strpos($authHeader, 'Bearer ') !== 0 || substr($authHeader, 7) !== $expectedToken) {
-    http_response_code(401);
-    echo json_encode(['erro' => 'Não autorizado. Token inválido.']);
-    exit;
-}
+// CORREÇÃO: Autenticação via Token Obrigatória (REMOVIDO A PEDIDO DO USUÁRIO)
+// $expectedToken = getenv('AGENT_API_TOKEN') ?: 'infravision_default_secure_token';
+// $authHeader = '';
+// 
+// if (function_exists('apache_request_headers')) {
+//     $headers = apache_request_headers();
+//     $authHeader = $headers['Authorization'] ?? '';
+// } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+//     $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+// }
+// 
+// if (strpos($authHeader, 'Bearer ') !== 0 || substr($authHeader, 7) !== $expectedToken) {
+//     http_response_code(401);
+//     echo json_encode(['erro' => 'Não autorizado. Token inválido.']);
+//     exit;
+// }
 
 // Ler o JSON enviado pelo agente (via POST ou CLI stdin)
 if (php_sapi_name() === 'cli') {
