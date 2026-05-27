@@ -75,6 +75,31 @@ function sendWhatsAppMessage($url, $token, $number, $message) {
     return $response;
 }
 
+echo "[NOTIFIER] Buscando contatos de alerta no banco...\n";
+$stmtContacts = $conn->query("SELECT tipo, destino FROM contatos_alerta WHERE ativo = 1");
+$contatosExtras = $stmtContacts->fetchAll(PDO::FETCH_ASSOC);
+
+$whatsappNumbers = [];
+if (!empty($whatsapp_number)) {
+    $whatsappNumbers[] = $whatsapp_number; // Da variavel de ambiente
+}
+$telegramChats = [];
+if (!empty($telegram_chat_id)) {
+    $telegramChats[] = $telegram_chat_id; // Da variavel de ambiente
+}
+
+foreach ($contatosExtras as $c) {
+    if ($c['tipo'] === 'whatsapp' && !empty($c['destino'])) {
+        $whatsappNumbers[] = preg_replace('/[^0-9]/', '', $c['destino']);
+    }
+    if ($c['tipo'] === 'telegram' && !empty($c['destino'])) {
+        $telegramChats[] = trim($c['destino']);
+    }
+}
+$whatsappNumbers = array_unique($whatsappNumbers);
+$telegramChats = array_unique($telegramChats);
+
+
 echo "[NOTIFIER] Buscando alertas PROBLEM nao notificados...\n";
 
 // Buscar alertas ativos não notificados
@@ -96,15 +121,21 @@ foreach ($problems as $alert) {
     $msg .= "*Data/Hora:* {$alert['criado_em']}\n";
     $msg .= "*Detalhes:* {$alert['mensagem']}";
 
-    echo "   Enviando PROBLEM para Alerta #{$alert['id']}... ";
-    sendTelegramMessage($telegram_token, $telegram_chat_id, $msg);
+    echo "   Enviando PROBLEM para Alerta #{$alert['id']}... \n";
+    
+    foreach ($telegramChats as $chat_id) {
+        sendTelegramMessage($telegram_token, $chat_id, $msg);
+    }
+    
     if (!empty($whatsapp_url)) {
-        sendWhatsAppMessage($whatsapp_url, $whatsapp_token, $whatsapp_number, $msg);
+        foreach ($whatsappNumbers as $num) {
+            sendWhatsAppMessage($whatsapp_url, $whatsapp_token, $num, $msg);
+        }
     }
     
     $update = $conn->prepare("UPDATE alertas SET notificado_em = NOW() WHERE id = ?");
     $update->execute([$alert['id']]);
-    echo "OK\n";
+    echo "   -> OK\n";
 }
 
 echo "[NOTIFIER] Buscando alertas RECOVERY nao notificados...\n";
@@ -125,15 +156,21 @@ foreach ($recoveries as $alert) {
     $msg .= "*Detalhes:* O servico/sensor voltou ao normal.\n";
     $msg .= "*Mensagem original:* {$alert['mensagem']}";
 
-    echo "   Enviando RECOVERY para Alerta #{$alert['id']}... ";
-    sendTelegramMessage($telegram_token, $telegram_chat_id, $msg);
+    echo "   Enviando RECOVERY para Alerta #{$alert['id']}... \n";
+    
+    foreach ($telegramChats as $chat_id) {
+        sendTelegramMessage($telegram_token, $chat_id, $msg);
+    }
+    
     if (!empty($whatsapp_url)) {
-        sendWhatsAppMessage($whatsapp_url, $whatsapp_token, $whatsapp_number, $msg);
+        foreach ($whatsappNumbers as $num) {
+            sendWhatsAppMessage($whatsapp_url, $whatsapp_token, $num, $msg);
+        }
     }
     
     $update = $conn->prepare("UPDATE alertas SET resolvido_notificado_em = NOW() WHERE id = ?");
     $update->execute([$alert['id']]);
-    echo "OK\n";
+    echo "   -> OK\n";
 }
 
 echo "[NOTIFIER] Rotina de notificacoes finalizada.\n";
