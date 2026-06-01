@@ -12,8 +12,12 @@
     <!-- Monitoramento de URLs -->
     <div class="col-12 col-lg-7">
         <div class="noc-card">
-            <div class="noc-card-header">
+            <div class="noc-card-header d-flex justify-content-between align-items-center">
                 <span><i class="fa-solid fa-link me-2 text-info"></i> URLs e Endpoints Externos</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 d-flex align-items-center" style="font-size: 0.75rem; font-weight: 500; background-color: rgba(25, 135, 84, 0.1);">
+                    <span class="spinner-grow spinner-grow-sm text-success me-2" role="status" style="width: 8px; height: 8px;"></span>
+                    Tempo Real Ativo
+                </span>
             </div>
             <div class="noc-card-body p-0">
                 <div class="table-responsive">
@@ -28,7 +32,7 @@
                                 <th class="text-end pe-4">Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="urls-table-body">
                             <?php foreach ($resultados_urls as $res): ?>
                             <tr>
                                 <td><?= htmlspecialchars($res['nome']) ?></td>
@@ -125,3 +129,50 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const base_path = '<?= BASE_PATH ?>';
+    const tableBody = document.getElementById("urls-table-body");
+    
+    function refreshUrls() {
+        fetch(`${base_path}/api/services`)
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data)) return;
+                
+                tableBody.innerHTML = '';
+                
+                data.forEach(res => {
+                    const tr = document.createElement('tr');
+                    
+                    const escapeHtml = (str) => {
+                        return str.replace(/&/g, "&amp;")
+                                  .replace(/</g, "&lt;")
+                                  .replace(/>/g, "&gt;")
+                                  .replace(/"/g, "&quot;")
+                                  .replace(/'/g, "&#039;");
+                    };
+                    
+                    tr.innerHTML = `
+                        <td>${escapeHtml(res.nome)}</td>
+                        <td><a href="${escapeHtml(res.url)}" target="_blank" class="text-primary">${escapeHtml(res.url)}</a></td>
+                        <td><span class="badge ${res.status_class}">${res.status_text}</span></td>
+                        <td>${res.latency}</td>
+                        <td>${res.uptime}</td>
+                        <td class="text-end pe-4">
+                            <a href="${base_path}/services/delete?id=${res.id}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja remover esta URL de monitoramento?');" title="Remover URL">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            })
+            .catch(error => console.error("Erro ao atualizar URLs em tempo real:", error));
+    }
+    
+    // Atualizar a cada 5 segundos para que seja realmente em tempo real dinâmico
+    setInterval(refreshUrls, 5000);
+});
+</script>
