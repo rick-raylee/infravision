@@ -8,6 +8,63 @@
     </div>
 </div>
 
+<!-- Resumo do Monitoramento e Explicação da Tecnologia -->
+<div class="row g-3 mb-4">
+    <!-- Card Resumo URLs -->
+    <div class="col-12 col-md-4">
+        <div class="noc-card p-3 d-flex align-items-center">
+            <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info me-3 shadow-sm d-flex align-items-center justify-content-center" style="font-size: 1.5rem; width: 54px; height: 54px;">
+                <i class="fa-solid fa-globe"></i>
+            </div>
+            <div>
+                <div class="stat-label" style="font-size: 0.75rem;">Websites & APIs</div>
+                <div class="h4 mb-0 fw-bold">
+                    <span id="stat-urls-total" class="text-light">0</span>
+                    <span class="small text-secondary" style="font-size: 0.8rem;"> total</span>
+                </div>
+                <div class="small mt-1" style="font-size: 0.8rem;">
+                    <span class="text-success fw-bold"><i class="fa-solid fa-circle-check"></i> <span id="stat-urls-online">0</span> Online</span>
+                    <span class="text-danger fw-bold ms-2"><i class="fa-solid fa-circle-xmark"></i> <span id="stat-urls-offline">0</span> Falhas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card Resumo E-mails -->
+    <div class="col-12 col-md-4">
+        <div class="noc-card p-3 d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary me-3 shadow-sm d-flex align-items-center justify-content-center" style="font-size: 1.5rem; width: 54px; height: 54px;">
+                <i class="fa-solid fa-envelope"></i>
+            </div>
+            <div>
+                <div class="stat-label" style="font-size: 0.75rem;">Servidores de E-mail</div>
+                <div class="h4 mb-0 fw-bold">
+                    <span id="stat-emails-total" class="text-light">0</span>
+                    <span class="small text-secondary" style="font-size: 0.8rem;"> total</span>
+                </div>
+                <div class="small mt-1" style="font-size: 0.8rem;">
+                    <span class="text-success fw-bold"><i class="fa-solid fa-circle-check"></i> <span id="stat-emails-online">0</span> Online</span>
+                    <span class="text-danger fw-bold ms-2"><i class="fa-solid fa-circle-xmark"></i> <span id="stat-emails-offline">0</span> Falhas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Como Funciona -->
+    <div class="col-12 col-md-4">
+        <div class="noc-card p-3 d-flex align-items-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(0, 0, 0, 0) 100%);">
+            <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info me-3 shadow-sm d-flex align-items-center justify-content-center" style="font-size: 1.3rem; width: 54px; height: 54px;">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div class="small text-secondary" style="line-height: 1.3; font-size: 0.75rem;">
+                <strong class="text-light d-block mb-1"><i class="fa-solid fa-shield-halved text-info me-1"></i> Como Funciona a Tecnologia?</strong>
+                <span class="d-block"><strong>Websites:</strong> Teste cURL + Fallback dinâmico pelo navegador para evitar bloqueio de firewalls governamentais.</span>
+                <span class="d-block mt-1"><strong>E-mail:</strong> Pings ativos de sockets TCP (conexões rápidas na porta) + simulação de diagnóstico.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <!-- Monitoramento de URLs -->
     <div class="col-12 col-lg-7">
@@ -259,6 +316,46 @@ document.addEventListener("DOMContentLoaded", function() {
     
     let emailServersData = [];
 
+    // --- Auxiliar: Atualização do Resumo Gráfico de URLs ---
+    function updateUrlStats() {
+        const total = tableBody.rows.length;
+        let online = 0;
+        let offline = 0;
+        
+        const badges = tableBody.querySelectorAll(".badge");
+        badges.forEach(b => {
+            // Conta como Online se for bg-success (200 OK)
+            if (b.classList.contains("bg-success")) {
+                online++;
+            } else {
+                offline++;
+            }
+        });
+        
+        document.getElementById("stat-urls-total").textContent = total;
+        document.getElementById("stat-urls-online").textContent = online;
+        document.getElementById("stat-urls-offline").textContent = offline;
+    }
+
+    // --- Auxiliar: Atualização do Resumo Gráfico de E-mails ---
+    function updateEmailStats() {
+        const total = emailServersData.length;
+        let online = 0;
+        let offline = 0;
+        
+        emailServersData.forEach(s => {
+            if (s.is_online) {
+                online++;
+            } else {
+                offline++;
+            }
+        });
+        
+        document.getElementById("stat-emails-total").textContent = total;
+        document.getElementById("stat-emails-online").textContent = online;
+        document.getElementById("stat-emails-offline").textContent = offline;
+    }
+
     // --- 1. Monitoramento de URLs em Tempo Real ---
     function refreshUrls() {
         fetch(`${base_path}/api/services`)
@@ -314,12 +411,18 @@ document.addEventListener("DOMContentLoaded", function() {
                                     
                                     latencyCol.innerHTML = `${clientLatency}ms <i class="fa-solid fa-circle-nodes text-info ms-1" style="cursor: help;" title="Medido de forma híbrida pelo seu navegador (bypasseou bloqueio de IP do servidor)"></i>`;
                                 }
+                                // Recalcula resumo de URLs imediatamente após o bypass do cliente
+                                updateUrlStats();
                             })
                             .catch((err) => {
                                 clearTimeout(timeoutId);
+                                updateUrlStats();
                             });
                     }
                 });
+                
+                // Recalcula resumo de URLs inicial
+                updateUrlStats();
             })
             .catch(error => console.error("Erro ao atualizar URLs em tempo real:", error));
     }
@@ -411,6 +514,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (currentSelectedId) {
                     updateEmailServerUI(currentSelectedId);
                 }
+                
+                // Atualiza o resumo numérico de servidores
+                updateEmailStats();
             })
             .catch(error => console.error("Erro ao atualizar servidores de e-mail:", error));
     }
