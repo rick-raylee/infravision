@@ -17,6 +17,10 @@ class ServiceMonitorController {
         if ($count == 0) {
             $db->exec("INSERT INTO urls_monitoradas (nome, url) VALUES ('Rodomax Atua', 'https://rodomax.atua.com.br/')");
         }
+
+        // Corrigir possíveis erros de digitação de protocolo nas URLs registradas (ex: htps:// -> https://)
+        $db->exec("UPDATE urls_monitoradas SET url = REPLACE(url, 'htps://', 'https://') WHERE url LIKE 'htps://%'");
+        $db->exec("UPDATE urls_monitoradas SET url = REPLACE(url, 'htp://', 'http://') WHERE url LIKE 'htp://%'");
     }
 
     public function index() {
@@ -81,6 +85,13 @@ class ServiceMonitorController {
 
         $nome = trim($_POST['nome'] ?? '');
         $url = trim($_POST['url'] ?? '');
+
+        // Auto-corrigir erros de digitação comuns no protocolo (ex: htps:// ou htp://)
+        if (preg_match('/^htps:\/\//i', $url)) {
+            $url = 'https://' . substr($url, 7);
+        } elseif (preg_match('/^htp:\/\//i', $url)) {
+            $url = 'http://' . substr($url, 6);
+        }
 
         if (!empty($nome) && !empty($url)) {
             // Validar URL básica
