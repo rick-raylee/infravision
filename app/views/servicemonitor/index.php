@@ -98,6 +98,9 @@
                                 <td id="latency-${res.id}"><?= $res['latency'] ?></td>
                                 <td><?= $res['uptime'] ?></td>
                                 <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="openEditUrlModal(<?= $res['id'] ?>)" title="Editar URL">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
                                     <a href="<?= BASE_PATH ?>/services/delete?id=<?= $res['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja remover esta URL de monitoramento?');" title="Remover URL">
                                         <i class="fa-solid fa-trash"></i>
                                     </a>
@@ -123,6 +126,7 @@
                         <?php endforeach; ?>
                     </select>
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newEmailServerModal" title="Novo Servidor"><i class="fa-solid fa-plus"></i></button>
+                    <button id="edit-email-server-btn" class="btn btn-sm btn-outline-warning" title="Editar Servidor Selecionado"><i class="fa-solid fa-pen"></i></button>
                     <button id="delete-email-server-btn" class="btn btn-sm btn-outline-danger" title="Excluir Servidor Selecionado"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
@@ -307,12 +311,151 @@
     </div>
 </div>
 
+<!-- Modal Editar URL -->
+<div class="modal fade" id="editUrlModal" tabindex="-1" aria-labelledby="editUrlModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <form action="<?= BASE_PATH ?>/services/update" method="POST">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="editUrlModalLabel"><i class="fa-solid fa-pen me-2 text-warning"></i>Editar URL de Monitoramento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editUrlId">
+                    <div class="mb-3">
+                        <label for="editUrlName" class="form-label">Nome do Serviço</label>
+                        <input type="text" name="nome" id="editUrlName" class="form-control bg-dark text-light border-secondary" placeholder="Ex: API de Pagamentos" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUrlAddress" class="form-label">URL / Endpoint</label>
+                        <input type="url" name="url" id="editUrlAddress" class="form-control bg-dark text-light border-secondary" placeholder="https://..." required>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Servidor de E-mail -->
+<div class="modal fade" id="editEmailServerModal" tabindex="-1" aria-labelledby="editEmailServerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <form action="<?= BASE_PATH ?>/services/email/update" method="POST">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="editEmailServerModalLabel"><i class="fa-solid fa-pen me-2 text-warning"></i>Editar Servidor de E-mail</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                    <input type="hidden" name="id" id="editEmailServerId">
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Servidor</label>
+                        <input type="text" name="nome" id="editEmailServerName" class="form-control bg-dark text-light border-secondary" placeholder="Ex: Exchange Principal" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-8">
+                            <label class="form-label">Host / IP / Endereço</label>
+                            <input type="text" name="host" id="editEmailServerHost" class="form-control bg-dark text-light border-secondary" placeholder="Ex: smtp.gmail.com" required>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Porta</label>
+                            <input type="number" name="porta" id="editEmailServerPort" class="form-control bg-dark text-light border-secondary" value="587" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Tipo de Servidor</label>
+                            <select name="tipo" id="editEmailServerType" class="form-select bg-dark text-light border-secondary">
+                                <option value="Exchange">Exchange</option>
+                                <option value="SMTP">SMTP</option>
+                                <option value="IMAP">IMAP</option>
+                                <option value="POP3">POP3</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Fila de Msgs</label>
+                            <input type="number" name="fila_mensagens" id="editEmailServerFila" class="form-control bg-dark text-light border-secondary" value="0">
+                        </div>
+                    </div>
+                    
+                    <hr class="border-secondary my-3 border-opacity-50">
+                    <div class="px-1 mb-2 small text-info"><i class="fa-solid fa-sliders me-1"></i> Simulação de Status para Apresentação/TCC</div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Mailbox DB</label>
+                            <select name="mailbox_db" id="editEmailServerMailbox" class="form-select bg-dark text-light border-secondary">
+                                <option value="Mounted">Mounted (Montado)</option>
+                                <option value="Dismounted">Dismounted (Desmontado)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Transport Service</label>
+                            <select name="transport_svc" id="editEmailServerTransport" class="form-select bg-dark text-light border-secondary">
+                                <option value="Running">Running (Executando)</option>
+                                <option value="Stopped">Stopped (Parado)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Active Sync</label>
+                            <select name="active_sync" id="editEmailServerActiveSync" class="form-select bg-dark text-light border-secondary">
+                                <option value="Healthy">Healthy (Saudável)</option>
+                                <option value="Unhealthy">Unhealthy (Não Saudável)</option>
+                                <option value="Failed">Failed (Com Erro)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Outlook Anywhere</label>
+                            <select name="outlook_anywhere" id="editEmailServerOutlook" class="form-select bg-dark text-light border-secondary">
+                                <option value="Healthy">Healthy (Saudável)</option>
+                                <option value="Unhealthy">Unhealthy (Não Saudável)</option>
+                                <option value="Failed">Failed (Com Erro)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Replicação DAG</label>
+                        <select name="dag_replication" id="editEmailServerDag" class="form-select bg-dark text-light border-secondary">
+                            <option value="Healthy">Healthy (Saudável)</option>
+                            <option value="Out of Sync">Out of Sync (Fora de Sincronia)</option>
+                            <option value="Failed">Failed (Com Erro)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+// Cache inicial das URLs para edição sem dependência de AJAX imediato
+window.urlsData = <?= json_encode($resultados_urls) ?>;
+
+window.openEditUrlModal = function(id) {
+    const res = (window.urlsData || []).find(u => u.id == id);
+    if (!res) return;
+    document.getElementById("editUrlId").value = res.id;
+    document.getElementById("editUrlName").value = res.nome;
+    document.getElementById("editUrlAddress").value = res.url;
+    const modal = new bootstrap.Modal(document.getElementById('editUrlModal'));
+    modal.show();
+};
+
 document.addEventListener("DOMContentLoaded", function() {
     const base_path = '<?= BASE_PATH ?>';
     const tableBody = document.getElementById("urls-table-body");
     const emailSelect = document.getElementById("email-server-select");
     const deleteEmailServerBtn = document.getElementById("delete-email-server-btn");
+    const editEmailServerBtn = document.getElementById("edit-email-server-btn");
     
     let emailServersData = [];
 
@@ -363,6 +506,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(data => {
                 if (!Array.isArray(data)) return;
                 
+                window.urlsData = data; // Atualizar o cache de URLs
                 tableBody.innerHTML = '';
                 
                 data.forEach(res => {
@@ -383,6 +527,9 @@ document.addEventListener("DOMContentLoaded", function() {
                         <td id="latency-${res.id}">${res.latency}</td>
                         <td>${res.uptime}</td>
                         <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-warning me-1" onclick="openEditUrlModal(${res.id})" title="Editar URL">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
                             <a href="${base_path}/services/delete?id=${res.id}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja remover esta URL de monitoramento?');" title="Remover URL">
                                 <i class="fa-solid fa-trash"></i>
                             </a>
@@ -534,6 +681,30 @@ document.addEventListener("DOMContentLoaded", function() {
                 window.location.href = `${base_path}/services/email/delete?id=${id}`;
             }
         }
+    });
+    
+    // Botão Editar
+    editEmailServerBtn.addEventListener("click", function() {
+        const id = emailSelect.value;
+        if (!id) return;
+        const srv = emailServersData.find(s => s.id == id);
+        if (!srv) return;
+        
+        document.getElementById("editEmailServerId").value = srv.id;
+        document.getElementById("editEmailServerName").value = srv.nome;
+        document.getElementById("editEmailServerHost").value = srv.host;
+        document.getElementById("editEmailServerPort").value = srv.porta;
+        document.getElementById("editEmailServerType").value = srv.tipo;
+        document.getElementById("editEmailServerFila").value = srv.fila_mensagens;
+        
+        document.getElementById("editEmailServerMailbox").value = srv.mailbox_db;
+        document.getElementById("editEmailServerTransport").value = srv.transport_svc;
+        document.getElementById("editEmailServerActiveSync").value = srv.active_sync;
+        document.getElementById("editEmailServerOutlook").value = srv.outlook_anywhere;
+        document.getElementById("editEmailServerDag").value = srv.dag_replication;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editEmailServerModal'));
+        modal.show();
     });
 
     // --- 3. Inicialização e Loop global de refresh ---

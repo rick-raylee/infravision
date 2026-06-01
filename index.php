@@ -135,6 +135,25 @@ switch ($path) {
         $controller->store();
         break;
 
+    case '/device/edit':
+        require 'app/controllers/DeviceController.php';
+        $controller = new DeviceController();
+        $controller->edit();
+        break;
+
+    case '/device/update':
+        require 'app/controllers/DeviceController.php';
+        $controller = new DeviceController();
+        $controller->update();
+        break;
+
+    case '/device/delete':
+        require 'app/controllers/DeviceController.php';
+        $controller = new DeviceController();
+        $controller->delete();
+        break;
+
+
     case '/users':
         require 'app/controllers/UserController.php';
         $controller = new UserController();
@@ -236,6 +255,12 @@ switch ($path) {
         $controller->delete();
         break;
 
+    case '/services/update':
+        require 'app/controllers/ServiceMonitorController.php';
+        $controller = new ServiceMonitorController();
+        $controller->update();
+        break;
+
     case '/services/email/store':
         require 'app/controllers/ServiceMonitorController.php';
         $controller = new ServiceMonitorController();
@@ -247,6 +272,13 @@ switch ($path) {
         $controller = new ServiceMonitorController();
         $controller->email_delete();
         break;
+
+    case '/services/email/update':
+        require 'app/controllers/ServiceMonitorController.php';
+        $controller = new ServiceMonitorController();
+        $controller->email_update();
+        break;
+
 
 
 
@@ -267,6 +299,25 @@ switch ($path) {
         $controller = new AlertContactController();
         $controller->store();
         break;
+
+    case '/alert-contact/edit':
+        require 'app/controllers/AlertContactController.php';
+        $controller = new AlertContactController();
+        $controller->edit();
+        break;
+
+    case '/alert-contact/update':
+        require 'app/controllers/AlertContactController.php';
+        $controller = new AlertContactController();
+        $controller->update();
+        break;
+
+    case '/alert-contact/delete':
+        require 'app/controllers/AlertContactController.php';
+        $controller = new AlertContactController();
+        $controller->delete();
+        break;
+
 
     default:
         header("HTTP/1.0 404 Not Found");

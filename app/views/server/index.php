@@ -35,8 +35,11 @@
                     <ul class="dropdown-menu dropdown-menu-dark shadow border-secondary">
                         <li><a class="dropdown-item" href="<?= $base_path ?>/server/details?nome=<?= urlencode($srv['nome']) ?>"><i class="fa-solid fa-gauge-high me-2 small"></i> Ver Detalhes</a></li>
                         <li><a class="dropdown-item" href="<?= $base_path ?>/services"><i class="fa-solid fa-globe me-2 small"></i> Monitorar Serviços</a></li>
-                        <li><hr class="dropdown-divider border-secondary"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmRemoval('<?= $srv['nome'] ?>')"><i class="fa-solid fa-trash-can me-2 small"></i> Remover</a></li>
+                        <?php if (($_SESSION['usuario_nivel'] ?? '') === 'admin'): ?>
+                            <li><a class="dropdown-item" href="<?= $base_path ?>/device/edit?id=<?= $srv['id'] ?>"><i class="fa-solid fa-pen-to-square me-2 small"></i> Editar</a></li>
+                            <li><hr class="dropdown-divider border-secondary"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="confirmRemoval('<?= $srv['id'] ?>', '<?= $srv['nome'] ?>')"><i class="fa-solid fa-trash-can me-2 small"></i> Remover</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </div>
@@ -98,10 +101,9 @@
 </div>
 
 <script>
-function confirmRemoval(serverName) {
+function confirmRemoval(serverId, serverName) {
     if (confirm('Tem certeza que deseja remover o servidor ' + serverName + ' do monitoramento?')) {
-        alert('Servidor ' + serverName + ' removido com sucesso!');
-        location.reload();
+        window.location.href = '<?= $base_path ?>/device/delete?id=' + serverId;
     }
 }
 </script>

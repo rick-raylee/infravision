@@ -58,4 +58,76 @@ class AlertContactController {
             echo "Erro ao cadastrar contato.";
         }
     }
+
+    public function edit() {
+        if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
+            header("Location: " . BASE_PATH . "/dashboard");
+            exit;
+        }
+        $id = intval($_GET['id'] ?? 0);
+        
+        $database = new Database();
+        $db = $database->getConnection();
+        
+        $stmt = $db->prepare("SELECT * FROM contatos_alerta WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $contato = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$contato) {
+            header("Location: " . BASE_PATH . "/alert-contacts");
+            exit;
+        }
+
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
+        require 'app/views/layout/header.php';
+        require 'app/views/alert_contact/edit.php';
+        require 'app/views/layout/footer.php';
+    }
+
+    public function update() {
+        if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
+            exit("Acesso negado");
+        }
+
+        $id = intval($_POST['id'] ?? 0);
+        $nome = $_POST['nome'] ?? '';
+        $tipo = $_POST['tipo'] ?? '';
+        $destino = $_POST['destino'] ?? '';
+        $ativo = isset($_POST['ativo']) ? 1 : 0;
+
+        if ($id > 0 && !empty($nome) && !empty($destino)) {
+            $database = new Database();
+            $db = $database->getConnection();
+
+            $query = "UPDATE contatos_alerta SET nome = :nome, tipo = :tipo, destino = :destino, ativo = :ativo WHERE id = :id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([
+                ':nome' => $nome,
+                ':tipo' => $tipo,
+                ':destino' => $destino,
+                ':ativo' => $ativo,
+                ':id' => $id
+            ]);
+        }
+
+        header("Location: " . BASE_PATH . "/alert-contacts");
+        exit;
+    }
+
+    public function delete() {
+        if (($_SESSION['usuario_nivel'] ?? '') !== 'admin') {
+            exit("Acesso negado");
+        }
+        $id = intval($_GET['id'] ?? 0);
+        if ($id > 0) {
+            $database = new Database();
+            $db = $database->getConnection();
+
+            $query = "DELETE FROM contatos_alerta WHERE id = :id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([':id' => $id]);
+        }
+        header("Location: " . BASE_PATH . "/alert-contacts");
+        exit;
+    }
 }

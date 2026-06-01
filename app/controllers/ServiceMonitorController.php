@@ -251,4 +251,86 @@ class ServiceMonitorController {
         header("Location: " . $base_path . "/services");
         exit;
     }
+
+    public function update() {
+        $database = new Database();
+        $db = $database->getConnection();
+
+        $id = intval($_POST['id'] ?? 0);
+        $nome = trim($_POST['nome'] ?? '');
+        $url = trim($_POST['url'] ?? '');
+
+        // Auto-corrigir erros de digitação comuns no protocolo
+        if (preg_match('/^htps:\/\//i', $url)) {
+            $url = 'https://' . substr($url, 7);
+        } elseif (preg_match('/^htp:\/\//i', $url)) {
+            $url = 'http://' . substr($url, 6);
+        }
+
+        if ($id > 0 && !empty($nome) && !empty($url)) {
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $query = "UPDATE urls_monitoradas SET nome = :nome, url = :url WHERE id = :id";
+                $stmt = $db->prepare($query);
+                $stmt->execute([
+                    ':nome' => $nome,
+                    ':url' => $url,
+                    ':id' => $id
+                ]);
+
+                if (file_exists('app/models/AuditLog.php')) {
+                    require_once 'app/models/AuditLog.php';
+                    AuditLog::write($db, $_SESSION['usuario_id'] ?? null, 'URL de monitoramento atualizada', "Nome: $nome, URL: $url");
+                }
+            }
+        }
+
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
+        header("Location: " . $base_path . "/services");
+        exit;
+    }
+
+    public function email_update() {
+        $database = new Database();
+        $db = $database->getConnection();
+
+        $id = intval($_POST['id'] ?? 0);
+        $nome = trim($_POST['nome'] ?? '');
+        $host = trim($_POST['host'] ?? '');
+        $tipo = trim($_POST['tipo'] ?? 'SMTP');
+        $porta = intval($_POST['porta'] ?? 587);
+        $fila_mensagens = intval($_POST['fila_mensagens'] ?? 0);
+        
+        $mailbox_db = trim($_POST['mailbox_db'] ?? 'Mounted');
+        $transport_svc = trim($_POST['transport_svc'] ?? 'Running');
+        $active_sync = trim($_POST['active_sync'] ?? 'Healthy');
+        $outlook_anywhere = trim($_POST['outlook_anywhere'] ?? 'Healthy');
+        $dag_replication = trim($_POST['dag_replication'] ?? 'Healthy');
+
+        if ($id > 0 && !empty($nome) && !empty($host)) {
+            $query = "UPDATE servidores_email SET nome = :nome, host = :host, tipo = :tipo, porta = :porta, fila_mensagens = :fila_mensagens, mailbox_db = :mailbox_db, transport_svc = :transport_svc, active_sync = :active_sync, outlook_anywhere = :outlook_anywhere, dag_replication = :dag_replication WHERE id = :id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([
+                ':nome' => $nome,
+                ':host' => $host,
+                ':tipo' => $tipo,
+                ':porta' => $porta,
+                ':fila_mensagens' => $fila_mensagens,
+                ':mailbox_db' => $mailbox_db,
+                ':transport_svc' => $transport_svc,
+                ':active_sync' => $active_sync,
+                ':outlook_anywhere' => $outlook_anywhere,
+                ':dag_replication' => $dag_replication,
+                ':id' => $id
+            ]);
+
+            if (file_exists('app/models/AuditLog.php')) {
+                require_once 'app/models/AuditLog.php';
+                AuditLog::write($db, $_SESSION['usuario_id'] ?? null, 'Servidor de email atualizado', "Nome: $nome, Host: $host ($tipo)");
+            }
+        }
+
+        $base_path = getenv('BASE_PATH') !== false ? getenv('BASE_PATH') : ((getenv('DB_HOST') !== false || isset($_ENV['DB_HOST']) || isset($_SERVER['DB_HOST'])) ? '' : '/infravision');
+        header("Location: " . $base_path . "/services");
+        exit;
+    }
 }

@@ -51,8 +51,8 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-edit"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                        <a href="<?= $base_path ?>/alert-contact/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-edit"></i></a>
+                                        <a href="<?= $base_path ?>/alert-contact/delete?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja remover este destinatário?');"><i class="fa-solid fa-trash"></i></a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
