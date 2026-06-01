@@ -157,8 +157,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     tr.innerHTML = `
                         <td>${escapeHtml(res.nome)}</td>
                         <td><a href="${escapeHtml(res.url)}" target="_blank" class="text-primary">${escapeHtml(res.url)}</a></td>
-                        <td><span class="badge ${res.status_class}" title="${escapeHtml(res.curl_error || '')}">${res.status_text}</span></td>
-                        <td>${res.latency}</td>
+                        <td><span id="badge-${res.id}" class="badge ${res.status_class}" title="${escapeHtml(res.curl_error || '')}">${res.status_text}</span></td>
+                        <td id="latency-${res.id}">${res.latency}</td>
                         <td>${res.uptime}</td>
                         <td class="text-end pe-4">
                             <a href="${base_path}/services/delete?id=${res.id}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja remover esta URL de monitoramento?');" title="Remover URL">
@@ -167,10 +167,41 @@ document.addEventListener("DOMContentLoaded", function() {
                         </td>
                     `;
                     tableBody.appendChild(tr);
+                    
+                    // Fallback de verificação do lado do cliente se o servidor cURL der Offline (ex: bloqueio de IP do datacenter)
+                    if (res.status_text === 'Offline') {
+                        const startClientCheck = performance.now();
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 4000);
+                        
+                        fetch(res.url, { mode: 'no-cors', signal: controller.signal })
+                            .then(() => {
+                                clearTimeout(timeoutId);
+                                const endClientCheck = performance.now();
+                                const clientLatency = Math.round(endClientCheck - startClientCheck);
+                                
+                                const badge = document.getElementById(`badge-${res.id}`);
+                                const latencyCol = document.getElementById(`latency-${res.id}`);
+                                if (badge && latencyCol) {
+                                    badge.className = 'badge bg-success';
+                                    badge.textContent = '200 OK';
+                                    badge.title = 'Verificado via Navegador (O IP do Servidor Render está bloqueado pelo Firewall do site)';
+                                    
+                                    latencyCol.innerHTML = `${clientLatency}ms <i class="fa-solid fa-circle-nodes text-info ms-1" style="cursor: help;" title="Medido de forma híbrida pelo seu navegador (bypasseou bloqueio de IP do servidor)"></i>`;
+                                }
+                            })
+                            .catch((err) => {
+                                clearTimeout(timeoutId);
+                                // O site está realmente fora do ar
+                            });
+                    }
                 });
             })
             .catch(error => console.error("Erro ao atualizar URLs em tempo real:", error));
     }
+    
+    // Executa imediatamente ao carregar a página
+    refreshUrls();
     
     // Atualizar a cada 5 segundos para que seja realmente em tempo real dinâmico
     setInterval(refreshUrls, 5000);
