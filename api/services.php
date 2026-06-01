@@ -19,16 +19,19 @@ $resultados_urls = [];
 foreach ($urls_to_check as $site) {
     $ch = curl_init($site['url']);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
     
     $start_time = microtime(true);
     curl_exec($ch);
     $end_time = microtime(true);
     
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $latency = round(($end_time - $start_time) * 1000);
+    $latency = $http_code ? round(($end_time - $start_time) * 1000) : 0;
+    $curl_err = curl_error($ch);
     curl_close($ch);
     
     $status_class = ($http_code >= 200 && $http_code < 400) ? 'bg-success' : 'bg-danger';
@@ -42,7 +45,8 @@ foreach ($urls_to_check as $site) {
         'status_class' => $status_class,
         'status_text' => $status_text,
         'latency' => $latency . 'ms',
-        'uptime' => '100%'
+        'uptime' => '100%',
+        'curl_error' => $curl_err
     ];
 }
 

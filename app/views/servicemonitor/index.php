@@ -37,7 +37,7 @@
                             <tr>
                                 <td><?= htmlspecialchars($res['nome']) ?></td>
                                 <td><a href="<?= htmlspecialchars($res['url']) ?>" target="_blank" class="text-primary"><?= htmlspecialchars($res['url']) ?></a></td>
-                                <td><span class="badge <?= $res['status_class'] ?>"><?= $res['status_text'] ?></span></td>
+                                <td><span class="badge <?= $res['status_class'] ?>" title="<?= htmlspecialchars($res['curl_error'] ?? '') ?>"><?= $res['status_text'] ?></span></td>
                                 <td><?= $res['latency'] ?></td>
                                 <td><?= $res['uptime'] ?></td>
                                 <td class="text-end pe-4">
@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     tr.innerHTML = `
                         <td>${escapeHtml(res.nome)}</td>
                         <td><a href="${escapeHtml(res.url)}" target="_blank" class="text-primary">${escapeHtml(res.url)}</a></td>
-                        <td><span class="badge ${res.status_class}">${res.status_text}</span></td>
+                        <td><span class="badge ${res.status_class}" title="${escapeHtml(res.curl_error || '')}">${res.status_text}</span></td>
                         <td>${res.latency}</td>
                         <td>${res.uptime}</td>
                         <td class="text-end pe-4">
