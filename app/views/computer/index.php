@@ -2,7 +2,12 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
             <h1><i class="fa-solid fa-laptop me-2 text-primary"></i> Computadores &amp; Notebooks Ativos</h1>
-            <div class="badge bg-primary p-2"><i class="fa-solid fa-desktop me-1"></i> Inventário Automático</div>
+            <div>
+                <?php if (($_SESSION['usuario_nivel'] ?? '') === 'admin'): ?>
+                    <a href="<?= $base_path ?>/computer/create" class="btn btn-primary btn-sm me-2"><i class="fa-solid fa-plus me-1"></i> Novo Computador</a>
+                <?php endif; ?>
+                <div class="badge bg-primary p-2 d-inline-flex align-items-center"><i class="fa-solid fa-desktop me-1"></i> Inventário Automático</div>
+            </div>
         </div>
         <p class="text-secondary">Lista de estações de trabalho monitoradas ativas, fichas técnicas detalhadas e controle de periféricos.</p>
     </div>
@@ -236,12 +241,22 @@
 
                     <!-- ======= HEADER ======= -->
                     <div class="computer-card__header">
-                        <div style="min-width:0;">
+                        <div style="min-width:0; flex:1;">
                             <div class="d-flex align-items-center gap-2 mb-1">
                                 <i class="fa-solid fa-laptop text-primary" style="font-size:1rem;"></i>
                                 <span class="computer-card__hostname" title="<?= htmlspecialchars($c['nome']) ?>">
                                     <?= htmlspecialchars($c['nome']) ?>
                                 </span>
+                                <?php if (($_SESSION['usuario_nivel'] ?? '') === 'admin'): ?>
+                                    <div class="dropdown d-inline-block">
+                                        <button class="btn btn-link text-secondary p-0 ms-1" type="button" data-bs-toggle="dropdown" style="font-size: 0.8rem; line-height: 1;"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                        <ul class="dropdown-menu dropdown-menu-dark shadow border-secondary" style="font-size: 0.8rem;">
+                                            <li><a class="dropdown-item" href="<?= $base_path ?>/computer/edit?id=<?= $c['id'] ?>"><i class="fa-solid fa-pen-to-square me-2 small text-warning"></i> Editar</a></li>
+                                            <li><hr class="dropdown-divider border-secondary"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="confirmComputerRemoval(<?= $c['id'] ?>, '<?= htmlspecialchars(addslashes($c['nome'])) ?>')"><i class="fa-solid fa-trash-can me-2 small"></i> Remover</a></li>
+                                        </ul>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             <div class="computer-card__ip">
                                 <i class="fa-solid fa-network-wired me-1" style="font-size:0.65rem;"></i>
@@ -466,3 +481,11 @@
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
+
+<script>
+function confirmComputerRemoval(id, name) {
+    if (confirm('Tem certeza que deseja remover o computador ' + name + ' do monitoramento?')) {
+        window.location.href = '<?= $base_path ?>/computer/delete?id=' + id;
+    }
+}
+</script>

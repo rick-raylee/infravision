@@ -123,6 +123,36 @@ switch ($path) {
         $controller->updatePeripherals();
         break;
 
+    case '/computer/create':
+        require 'app/controllers/ComputerController.php';
+        $controller = new ComputerController();
+        $controller->create();
+        break;
+
+    case '/computer/store':
+        require 'app/controllers/ComputerController.php';
+        $controller = new ComputerController();
+        $controller->store();
+        break;
+
+    case '/computer/edit':
+        require 'app/controllers/ComputerController.php';
+        $controller = new ComputerController();
+        $controller->edit();
+        break;
+
+    case '/computer/update':
+        require 'app/controllers/ComputerController.php';
+        $controller = new ComputerController();
+        $controller->update();
+        break;
+
+    case '/computer/delete':
+        require 'app/controllers/ComputerController.php';
+        $controller = new ComputerController();
+        $controller->delete();
+        break;
+
     case '/device/create':
         require 'app/controllers/DeviceController.php';
         $controller = new DeviceController();
