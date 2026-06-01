@@ -236,6 +236,19 @@ switch ($path) {
         $controller->delete();
         break;
 
+    case '/services/email/store':
+        require 'app/controllers/ServiceMonitorController.php';
+        $controller = new ServiceMonitorController();
+        $controller->email_store();
+        break;
+
+    case '/services/email/delete':
+        require 'app/controllers/ServiceMonitorController.php';
+        $controller = new ServiceMonitorController();
+        $controller->email_delete();
+        break;
+
+
 
     case '/alert-contacts':
         require 'app/controllers/AlertContactController.php';

@@ -93,3 +93,22 @@ CREATE TABLE IF NOT EXISTS urls_monitoradas (
 
 INSERT INTO urls_monitoradas (nome, url) VALUES ('Rodomax Atua', 'https://rodomax.atua.com.br/');
 
+CREATE TABLE IF NOT EXISTS servidores_email (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    host VARCHAR(255) NOT NULL,
+    tipo VARCHAR(50) NOT NULL DEFAULT 'SMTP',
+    porta INT NOT NULL DEFAULT 587,
+    fila_mensagens INT NOT NULL DEFAULT 0,
+    mailbox_db VARCHAR(50) NOT NULL DEFAULT 'Mounted',
+    transport_svc VARCHAR(50) NOT NULL DEFAULT 'Running',
+    active_sync VARCHAR(50) NOT NULL DEFAULT 'Healthy',
+    outlook_anywhere VARCHAR(50) NOT NULL DEFAULT 'Healthy',
+    dag_replication VARCHAR(50) NOT NULL DEFAULT 'Healthy',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO servidores_email (nome, host, tipo, porta, fila_mensagens, mailbox_db, transport_svc, active_sync, outlook_anywhere, dag_replication) 
+VALUES ('Exchange Local', '127.0.0.1', 'Exchange', 25, 452, 'Mounted', 'Running', 'Healthy', 'Healthy', 'Out of Sync');
+
+
