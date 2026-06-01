@@ -25,6 +25,7 @@
                                 <th>Status</th>
                                 <th>Tempo Resp.</th>
                                 <th>Uptime (7d)</th>
+                                <th class="text-end pe-4">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -35,6 +36,11 @@
                                 <td><span class="badge <?= $res['status_class'] ?>"><?= $res['status_text'] ?></span></td>
                                 <td><?= $res['latency'] ?></td>
                                 <td><?= $res['uptime'] ?></td>
+                                <td class="text-end pe-4">
+                                    <a href="<?= BASE_PATH ?>/services/delete?id=<?= $res['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja remover esta URL de monitoramento?');" title="Remover URL">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -96,26 +102,26 @@
 <div class="modal fade" id="newUrlModal" tabindex="-1" aria-labelledby="newUrlModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title" id="newUrlModalLabel"><i class="fa-solid fa-plus me-2 text-primary"></i>Nova URL</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="newUrlForm">
+            <form action="<?= BASE_PATH ?>/services/store" method="POST">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="newUrlModalLabel"><i class="fa-solid fa-plus me-2 text-primary"></i>Nova URL</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                     <div class="mb-3">
                         <label for="urlName" class="form-label">Nome do Serviço</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary" id="urlName" placeholder="Ex: API de Pagamentos" required>
+                        <input type="text" name="nome" class="form-control bg-dark text-light border-secondary" id="urlName" placeholder="Ex: API de Pagamentos" required>
                     </div>
                     <div class="mb-3">
                         <label for="urlAddress" class="form-label">URL / Endpoint</label>
-                        <input type="url" class="form-control bg-dark text-light border-secondary" id="urlAddress" placeholder="https://..." required>
+                        <input type="url" name="url" class="form-control bg-dark text-light border-secondary" id="urlAddress" placeholder="https://..." required>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="$('#newUrlModal').modal('hide');">Salvar</button>
-            </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

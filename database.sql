@@ -83,3 +83,13 @@ CREATE TABLE IF NOT EXISTS contatos_alerta (
     ativo BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS urls_monitoradas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO urls_monitoradas (nome, url) VALUES ('Rodomax Atua', 'https://rodomax.atua.com.br/');
+

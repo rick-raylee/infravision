@@ -224,6 +224,19 @@ switch ($path) {
         $controller->index();
         break;
 
+    case '/services/store':
+        require 'app/controllers/ServiceMonitorController.php';
+        $controller = new ServiceMonitorController();
+        $controller->store();
+        break;
+
+    case '/services/delete':
+        require 'app/controllers/ServiceMonitorController.php';
+        $controller = new ServiceMonitorController();
+        $controller->delete();
+        break;
+
+
     case '/alert-contacts':
         require 'app/controllers/AlertContactController.php';
         $controller = new AlertContactController();
