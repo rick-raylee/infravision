@@ -232,6 +232,18 @@ switch ($path) {
         $controller->index();
         break;
 
+    case '/rule/store':
+        require 'app/controllers/RuleController.php';
+        $controller = new RuleController();
+        $controller->store();
+        break;
+
+    case '/rule/delete':
+        require 'app/controllers/RuleController.php';
+        $controller = new RuleController();
+        $controller->delete();
+        break;
+
     case '/settings':
         require 'app/controllers/SettingsController.php';
         $controller = new SettingsController();
