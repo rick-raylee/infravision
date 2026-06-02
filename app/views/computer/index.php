@@ -321,6 +321,32 @@ if (isset($computadoresPorSetor['Sem Setor'])) {
     background-color: rgba(255, 255, 255, 0.08) !important;
     border-color: rgba(255, 255, 255, 0.15) !important;
 }
+
+/* Card Sub-tabs (Ficha vs Perifericos) */
+.card-tabs {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.15);
+}
+.card-tabs .nav-link {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.45);
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: 8px 16px;
+    transition: all 0.15s ease-in-out;
+}
+.card-tabs .nav-link.active {
+    color: var(--noc-primary) !important;
+    border-bottom-color: var(--noc-primary);
+    background: none !important;
+}
+.card-tabs .nav-link:hover:not(.active) {
+    color: rgba(255,255,255,0.8);
+    border-bottom-color: rgba(255,255,255,0.1);
+}
 </style>
 
     <?php if (empty($computadores)): ?>
@@ -406,6 +432,24 @@ if (isset($computadoresPorSetor['Sem Setor'])) {
                             </div>
                         </div>
                     </div>
+
+                    <!-- ======= SUB-TABS INTERNAS ======= -->
+                    <ul class="nav nav-tabs card-tabs border-bottom-0" id="card-tabs-<?= $c['id'] ?>" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="ficha-tab-<?= $c['id'] ?>" data-bs-toggle="tab" data-bs-target="#ficha-content-<?= $c['id'] ?>" type="button" role="tab" aria-controls="ficha-content-<?= $c['id'] ?>" aria-selected="true">
+                                <i class="fa-solid fa-circle-info me-1"></i> Ficha Técnica
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="perif-tab-<?= $c['id'] ?>" data-bs-toggle="tab" data-bs-target="#perif-content-<?= $c['id'] ?>" type="button" role="tab" aria-controls="perif-content-<?= $c['id'] ?>" aria-selected="false">
+                                <i class="fa-solid fa-keyboard me-1"></i> Periféricos
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content flex-grow-1" id="card-tab-content-<?= $c['id'] ?>">
+                        <!-- ABA: Ficha Técnica -->
+                        <div class="tab-pane fade show active" id="ficha-content-<?= $c['id'] ?>" role="tabpanel" aria-labelledby="ficha-tab-<?= $c['id'] ?>">
 
                     <!-- ======= FICHA TÉCNICA ======= -->
                     <div class="ficha-section flex-grow-1">
@@ -538,15 +582,18 @@ if (isset($computadoresPorSetor['Sem Setor'])) {
                                 <span class="usage-badge usage-badge--cpu">
                                     <i class="fa-solid fa-microchip" style="font-size:0.65rem;"></i> CPU <?= $cpu ?>%
                                 </span>
-                                <span class="usage-badge usage-badge--ram">
+                                 <span class="usage-badge usage-badge--ram">
                                     <i class="fa-solid fa-memory" style="font-size:0.65rem;"></i> RAM <?= $ram ?> MB
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </div> <!-- End ficha-section -->
+                </div> <!-- End tab-pane for Ficha Técnica -->
 
+                <!-- ABA: Periféricos -->
+                <div class="tab-pane fade" id="perif-content-<?= $c['id'] ?>" role="tabpanel" aria-labelledby="perif-tab-<?= $c['id'] ?>">
                     <!-- ======= PERIFÉRICOS ======= -->
-                    <div class="perifericos-section">
+                    <div class="perifericos-section" style="border-top: none; background: none;">
                         <div class="perifericos-section__title">
                             <i class="fa-solid fa-keyboard"></i> Controle de Periféricos (Troca)
                         </div>
@@ -608,6 +655,8 @@ if (isset($computadoresPorSetor['Sem Setor'])) {
 
                         </div>
                     </div>
+                </div> <!-- End tab-pane for Periféricos -->
+            </div> <!-- End tab-content for card tabs -->
 
                 </div>
             </div>
