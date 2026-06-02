@@ -13,6 +13,93 @@
     </div>
 </div>
 
+<?php
+// Consolidação de estatísticas
+$totalComputers = count($computadores);
+$onlineComputers = 0;
+$offlineComputers = 0;
+$setoresCount = [];
+
+foreach ($computadores as $c) {
+    if ($c['status'] === 'online') {
+        $onlineComputers++;
+    } else {
+        $offlineComputers++;
+    }
+    if (!empty($c['setor'])) {
+        $setoresCount[trim($c['setor'])] = true;
+    }
+}
+$totalSetores = count($setoresCount);
+
+// Agrupamento por setor
+$computadoresPorSetor = [];
+foreach ($computadores as $c) {
+    $setor = !empty($c['setor']) ? trim($c['setor']) : 'Sem Setor';
+    $computadoresPorSetor[$setor][] = $c;
+}
+ksort($computadoresPorSetor);
+if (isset($computadoresPorSetor['Sem Setor'])) {
+    $semSetorGroup = $computadoresPorSetor['Sem Setor'];
+    unset($computadoresPorSetor['Sem Setor']);
+    $computadoresPorSetor['Sem Setor'] = $semSetorGroup;
+}
+?>
+
+<div class="row g-3 mb-4">
+    <!-- Total de Computadores -->
+    <div class="col-12 col-md-3">
+        <div class="noc-card p-3 d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary me-3 shadow-sm d-flex align-items-center justify-content-center" style="font-size: 1.5rem; width: 54px; height: 54px;">
+                <i class="fa-solid fa-laptop"></i>
+            </div>
+            <div>
+                <div class="stat-label text-secondary" style="font-size: 0.75rem;">Total de Computadores</div>
+                <div class="h4 mb-0 fw-bold text-light" id="stat-computers-total"><?= $totalComputers ?></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Computadores Online -->
+    <div class="col-12 col-md-3">
+        <div class="noc-card p-3 d-flex align-items-center">
+            <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success me-3 shadow-sm d-flex align-items-center justify-content-center" style="font-size: 1.5rem; width: 54px; height: 54px;">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <div class="stat-label text-secondary" style="font-size: 0.75rem;">Máquinas Online</div>
+                <div class="h4 mb-0 fw-bold text-success" id="stat-computers-online"><?= $onlineComputers ?></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Computadores Offline -->
+    <div class="col-12 col-md-3">
+        <div class="noc-card p-3 d-flex align-items-center">
+            <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger me-3 shadow-sm d-flex align-items-center justify-content-center" style="font-size: 1.5rem; width: 54px; height: 54px;">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+            <div>
+                <div class="stat-label text-secondary" style="font-size: 0.75rem;">Máquinas Offline</div>
+                <div class="h4 mb-0 fw-bold text-danger" id="stat-computers-offline"><?= $offlineComputers ?></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total de Setores -->
+    <div class="col-12 col-md-3">
+        <div class="noc-card p-3 d-flex align-items-center">
+            <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning me-3 shadow-sm d-flex align-items-center justify-content-center" style="font-size: 1.5rem; width: 54px; height: 54px;">
+                <i class="fa-solid fa-building"></i>
+            </div>
+            <div>
+                <div class="stat-label text-secondary" style="font-size: 0.75rem;">Setores Ativos</div>
+                <div class="h4 mb-0 fw-bold text-warning" id="stat-computers-setores"><?= $totalSetores ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 /* ============================================================
    COMPUTER CARDS — FICHA TÉCNICA REDESIGN
@@ -221,21 +308,35 @@
 }
 </style>
 
-<div class="row g-4">
     <?php if (empty($computadores)): ?>
-        <div class="col-12">
-            <div class="noc-card p-5 text-center text-secondary">
-                <i class="fa-solid fa-network-wired fa-3x mb-3 text-muted"></i>
-                <h4>Nenhum Computador Ativo</h4>
-                <p class="mb-0">Execute o agente em computadores ou notebooks para registrá-los e ver a ficha técnica em tempo real.</p>
+        <div class="row">
+            <div class="col-12">
+                <div class="noc-card p-5 text-center text-secondary">
+                    <i class="fa-solid fa-network-wired fa-3x mb-3 text-muted"></i>
+                    <h4>Nenhum Computador Ativo</h4>
+                    <p class="mb-0">Execute o agente em computadores ou notebooks para registrá-los e ver a ficha técnica em tempo real.</p>
+                </div>
             </div>
         </div>
     <?php else: ?>
-        <?php foreach ($computadores as $c):
-            $cpu = $c['cpu'] !== null ? round($c['cpu']) : 0;
-            $ram = $c['ram'] !== null ? round($c['ram']) : 0;
-            $statusClass = $c['status'] === 'online' ? 'bg-success' : ($c['status'] === 'alerta' ? 'bg-warning' : 'bg-danger');
-        ?>
+        <?php foreach ($computadoresPorSetor as $setor => $list): ?>
+            <div class="row mb-3 mt-4">
+                <div class="col-12">
+                    <div class="d-flex align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-2">
+                        <h4 class="text-light mb-0" style="font-size: 1.15rem; font-weight: 600;">
+                            <i class="fa-solid fa-building text-primary me-2"></i>Setor: <?= htmlspecialchars($setor) ?>
+                        </h4>
+                        <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-50 rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 500;"><?= count($list) ?> <?= count($list) === 1 ? 'máquina' : 'máquinas' ?></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row g-4 mb-4">
+                <?php foreach ($list as $c):
+                    $cpu = $c['cpu'] !== null ? round($c['cpu']) : 0;
+                    $ram = $c['ram'] !== null ? round($c['ram']) : 0;
+                    $statusClass = $c['status'] === 'online' ? 'bg-success' : ($c['status'] === 'alerta' ? 'bg-warning' : 'bg-danger');
+                ?>
             <div class="col-12 col-xl-6">
                 <div class="computer-card h-100 d-flex flex-column">
 
@@ -479,8 +580,9 @@
                 </div>
             </div>
         <?php endforeach; ?>
+            </div> <!-- End row g-4 -->
+        <?php endforeach; ?>
     <?php endif; ?>
-</div>
 
 <script>
 function confirmComputerRemoval(id, name) {
