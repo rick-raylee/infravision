@@ -306,6 +306,21 @@ if (isset($computadoresPorSetor['Sem Setor'])) {
     background: rgba(251,191,36,0.3);
     color: #fff;
 }
+
+/* Tab Pills Styling for Sectors */
+#sector-tabs .nav-link.active {
+    background-color: var(--noc-primary) !important;
+    border-color: var(--noc-primary) !important;
+    color: #fff !important;
+}
+#sector-tabs .nav-link {
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+#sector-tabs .nav-link:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
 </style>
 
     <?php if (empty($computadores)): ?>
@@ -319,24 +334,41 @@ if (isset($computadoresPorSetor['Sem Setor'])) {
             </div>
         </div>
     <?php else: ?>
+        <!-- Abas por Setor -->
+        <ul class="nav nav-pills mb-4 gap-2" id="sector-tabs">
+            <li class="nav-item">
+                <button class="nav-link active bg-dark bg-opacity-50 text-light border border-secondary border-opacity-25" onclick="filterSector('all', this)">
+                    <i class="fa-solid fa-layer-group me-1.5 text-primary"></i> Todos <span class="badge bg-secondary ms-1 bg-opacity-25 text-secondary border border-secondary border-opacity-20"><?= $totalComputers ?></span>
+                </button>
+            </li>
+            <?php foreach ($computadoresPorSetor as $setor => $list): ?>
+                <li class="nav-item">
+                    <button class="nav-link bg-dark bg-opacity-50 text-light border border-secondary border-opacity-25" onclick="filterSector('<?= htmlspecialchars(addslashes($setor)) ?>', this)">
+                        <i class="fa-solid fa-building me-1.5 text-info"></i> <?= htmlspecialchars($setor) ?> <span class="badge bg-secondary ms-1 bg-opacity-25 text-secondary border border-secondary border-opacity-20"><?= count($list) ?></span>
+                    </button>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+
         <?php foreach ($computadoresPorSetor as $setor => $list): ?>
-            <div class="row mb-3 mt-4">
-                <div class="col-12">
-                    <div class="d-flex align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-2">
-                        <h4 class="text-light mb-0" style="font-size: 1.15rem; font-weight: 600;">
-                            <i class="fa-solid fa-building text-primary me-2"></i>Setor: <?= htmlspecialchars($setor) ?>
-                        </h4>
-                        <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-50 rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 500;"><?= count($list) ?> <?= count($list) === 1 ? 'máquina' : 'máquinas' ?></span>
+            <div class="sector-group-wrapper" data-sector-name="<?= htmlspecialchars($setor) ?>">
+                <div class="row mb-3 mt-4">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-2">
+                            <h4 class="text-light mb-0" style="font-size: 1.15rem; font-weight: 600;">
+                                <i class="fa-solid fa-building text-primary me-2"></i>Setor: <?= htmlspecialchars($setor) ?>
+                            </h4>
+                            <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-50 rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 500;"><?= count($list) ?> <?= count($list) === 1 ? 'máquina' : 'máquinas' ?></span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="row g-4 mb-4">
-                <?php foreach ($list as $c):
-                    $cpu = $c['cpu'] !== null ? round($c['cpu']) : 0;
-                    $ram = $c['ram'] !== null ? round($c['ram']) : 0;
-                    $statusClass = $c['status'] === 'online' ? 'bg-success' : ($c['status'] === 'alerta' ? 'bg-warning' : 'bg-danger');
-                ?>
+                
+                <div class="row g-4 mb-4">
+                    <?php foreach ($list as $c):
+                        $cpu = $c['cpu'] !== null ? round($c['cpu']) : 0;
+                        $ram = $c['ram'] !== null ? round($c['ram']) : 0;
+                        $statusClass = $c['status'] === 'online' ? 'bg-success' : ($c['status'] === 'alerta' ? 'bg-warning' : 'bg-danger');
+                    ?>
             <div class="col-12 col-xl-6">
                 <div class="computer-card h-100 d-flex flex-column">
 
@@ -581,6 +613,7 @@ if (isset($computadoresPorSetor['Sem Setor'])) {
             </div>
         <?php endforeach; ?>
             </div> <!-- End row g-4 -->
+            </div> <!-- End sector-group-wrapper -->
         <?php endforeach; ?>
     <?php endif; ?>
 
@@ -589,5 +622,27 @@ function confirmComputerRemoval(id, name) {
     if (confirm('Tem certeza que deseja remover o computador ' + name + ' do monitoramento?')) {
         window.location.href = '<?= $base_path ?>/computer/delete?id=' + id;
     }
+}
+
+function filterSector(sectorName, btn) {
+    // 1. Remove active class from all tab buttons
+    const buttons = document.querySelectorAll('#sector-tabs .nav-link');
+    buttons.forEach(b => b.classList.remove('active'));
+    
+    // 2. Add active class to clicked button
+    btn.classList.add('active');
+    
+    // 3. Show/hide sector wrappers
+    const wrappers = document.querySelectorAll('.sector-group-wrapper');
+    wrappers.forEach(w => {
+        if (sectorName === 'all' || w.getAttribute('data-sector-name') === sectorName) {
+            w.classList.remove('d-none');
+            w.style.opacity = '0';
+            w.style.transition = 'opacity 0.2s ease-in-out';
+            setTimeout(() => w.style.opacity = '1', 30);
+        } else {
+            w.classList.add('d-none');
+        }
+    });
 }
 </script>
