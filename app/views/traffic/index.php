@@ -14,7 +14,7 @@
         <div class="noc-card">
             <div class="noc-card-body">
                 <div class="stat-label">Conexões Atuais</div>
-                <div class="stat-value"><?= (int)($stats['total'] ?? 0) ?></div>
+                <div id="stat-total" class="stat-value"><?= (int)($stats['total'] ?? 0) ?></div>
                 <div class="text-secondary small">Dados enviados pelo agente</div>
             </div>
         </div>
@@ -23,8 +23,8 @@
         <div class="noc-card">
             <div class="noc-card-body">
                 <div class="stat-label">Serviço mais Acessado</div>
-                <div class="stat-value" style="font-size: 1.5rem;"><?= $stats['top_service'] ? htmlspecialchars($stats['top_service']) : '—' ?></div>
-                <div class="text-secondary small"><?= $stats['top_service'] ? 'Com base nas conexões ativas' : 'Sem conexões registradas' ?></div>
+                <div id="stat-top-service" class="stat-value" style="font-size: 1.5rem;"><?= $stats['top_service'] ? htmlspecialchars($stats['top_service']) : '—' ?></div>
+                <div id="stat-top-service-sub" class="text-secondary small"><?= $stats['top_service'] ? 'Com base nas conexões ativas' : 'Sem conexões registradas' ?></div>
             </div>
         </div>
     </div>
@@ -32,8 +32,8 @@
         <div class="noc-card">
             <div class="noc-card-body">
                 <div class="stat-label">Top Consumidor</div>
-                <div class="stat-value" style="font-size: 1.5rem;"><?= $stats['top_consumer'] ? htmlspecialchars($stats['top_consumer']) : '—' ?></div>
-                <div class="text-primary small"><?= $stats['top_consumer_ip'] ? 'IP: ' . htmlspecialchars($stats['top_consumer_ip']) : 'Aguardando agente' ?></div>
+                <div id="stat-top-consumer" class="stat-value" style="font-size: 1.5rem;"><?= $stats['top_consumer'] ? htmlspecialchars($stats['top_consumer']) : '—' ?></div>
+                <div id="stat-top-consumer-ip" class="text-primary small"><?= $stats['top_consumer_ip'] ? 'IP: ' . htmlspecialchars($stats['top_consumer_ip']) : 'Aguardando agente' ?></div>
             </div>
         </div>
     </div>
@@ -91,7 +91,7 @@
 
 <?php ob_start(); ?>
 <script>
-    const trafficData = <?= json_encode($conexoes) ?>;
+    let trafficData = <?= json_encode($conexoes) ?>;
 
     function renderTraffic(query = '') {
         const body = document.getElementById('traffic-body');
@@ -140,6 +140,52 @@
         });
     }
 
+    async function fetchTrafficData() {
+        try {
+            const basePath = '<?= BASE_PATH ?>';
+            const response = await fetch(`${basePath}/api/traffic`);
+            if (!response.ok) {
+                if (response.status === 401) {
+                    location.reload();
+                    return;
+                }
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            if (data && data.conexoes && data.stats) {
+                trafficData = data.conexoes;
+                
+                // Update stats cards in DOM
+                document.getElementById('stat-total').textContent = data.stats.total || 0;
+                
+                const topServiceEl = document.getElementById('stat-top-service');
+                const topServiceSubEl = document.getElementById('stat-top-service-sub');
+                if (data.stats.top_service) {
+                    topServiceEl.textContent = data.stats.top_service;
+                    topServiceSubEl.textContent = 'Com base nas conexões ativas';
+                } else {
+                    topServiceEl.textContent = '—';
+                    topServiceSubEl.textContent = 'Sem conexões registradas';
+                }
+
+                const topConsumerEl = document.getElementById('stat-top-consumer');
+                const topConsumerIpEl = document.getElementById('stat-top-consumer-ip');
+                if (data.stats.top_consumer) {
+                    topConsumerEl.textContent = data.stats.top_consumer;
+                    topConsumerIpEl.textContent = data.stats.top_consumer_ip ? 'IP: ' + data.stats.top_consumer_ip : 'Aguardando agente';
+                } else {
+                    topConsumerEl.textContent = '—';
+                    topConsumerIpEl.textContent = 'Aguardando agente';
+                }
+
+                const trafficFilter = document.getElementById('trafficFilter');
+                renderTraffic(trafficFilter ? trafficFilter.value : '');
+            }
+        } catch (error) {
+            console.error('Error fetching traffic data:', error);
+        }
+    }
+
     renderTraffic();
 
     const trafficFilter = document.getElementById('trafficFilter');
@@ -149,9 +195,7 @@
         });
     }
 
-    // Recarregar os dados do banco a cada 30 segundos
-    setInterval(() => {
-        location.reload();
-    }, 30000);
+    // Polling a cada 5 segundos
+    setInterval(fetchTrafficData, 5000);
 </script>
 <?php $extra_js = ob_get_clean(); ?>
