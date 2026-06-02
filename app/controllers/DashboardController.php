@@ -10,10 +10,26 @@ class DashboardController {
         $deviceModel = new Device($db);
 
         // Buscar estatísticas reais do banco
-        $total_devices = $deviceModel->countByStatus('online') + $deviceModel->countByStatus('alerta') + $deviceModel->countByStatus('offline');
+        $total_devices = 0;
+        $stmtTotal = $db->query("SELECT COUNT(*) FROM dispositivos");
+        if ($stmtTotal) {
+            $total_devices = (int)$stmtTotal->fetchColumn();
+        }
+
+        $servidores_total = 0;
+        $stmtServTotal = $db->query("SELECT COUNT(*) FROM dispositivos WHERE tipo IN ('servidor_windows', 'servidor_linux')");
+        if ($stmtServTotal) {
+            $servidores_total = (int)$stmtServTotal->fetchColumn();
+        }
+
+        $servidores_online = 0;
+        $stmtServOnline = $db->query("SELECT COUNT(*) FROM dispositivos WHERE tipo IN ('servidor_windows', 'servidor_linux') AND status = 'online'");
+        if ($stmtServOnline) {
+            $servidores_online = (int)$stmtServOnline->fetchColumn();
+        }
         
         $conexoes_ativas = 0;
-        $stmtConn = $db->query("SELECT COUNT(*) FROM conexoes");
+        $stmtConn = $db->query("SELECT COUNT(*) FROM conexoes c JOIN dispositivos d ON c.dispositivo_id = d.id WHERE d.status = 'online'");
         if ($stmtConn) {
             $conexoes_ativas = (int)$stmtConn->fetchColumn();
         }
@@ -22,8 +38,8 @@ class DashboardController {
         $alertas_ativos = $stmtAlertas ? (int)$stmtAlertas->fetchColumn() : 0;
 
         $estatisticas = [
-            'servidores_online' => $deviceModel->countByStatus('online'),
-            'servidores_total' => $total_devices,
+            'servidores_online' => $servidores_online,
+            'servidores_total' => $servidores_total,
             'alertas_ativos' => $alertas_ativos,
             'conexoes_ativas' => $conexoes_ativas,
             'vms_total' => $total_devices,
